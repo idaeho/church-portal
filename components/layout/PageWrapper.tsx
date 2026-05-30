@@ -1,8 +1,10 @@
 "use client";
+import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { Menu } from "lucide-react";
 
 interface Props {
   children: React.ReactNode;
@@ -14,6 +16,7 @@ interface Props {
 export function PageWrapper({ children, title, subtitle, requireAuth = true }: Props) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (requireAuth && status === "unauthenticated") {
@@ -33,21 +36,33 @@ export function PageWrapper({ children, title, subtitle, requireAuth = true }: P
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      <Sidebar />
-      <main className="ml-[260px] flex-1 min-h-screen">
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* 데스크톱: 260px 마진 / 모바일: 마진 없음 */}
+      <main className="md:ml-[260px] flex-1 min-h-screen w-0">
         {/* 상단 헤더 */}
-        <header className="sticky top-0 z-10 bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-slate-800">{title}</h1>
-            {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
+        <header className="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 md:px-8 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* 모바일 햄버거 */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden text-slate-600 hover:text-slate-900 p-1 -ml-1"
+              aria-label="메뉴 열기"
+            >
+              <Menu size={22} />
+            </button>
+            <div>
+              <h1 className="text-lg md:text-xl font-bold text-slate-800">{title}</h1>
+              {subtitle && <p className="text-xs md:text-sm text-slate-500 mt-0.5">{subtitle}</p>}
+            </div>
           </div>
-          <div className="text-sm text-slate-400 font-medium">
+          <div className="text-xs md:text-sm text-slate-400 font-medium hidden sm:block">
             {new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "short" })}
           </div>
         </header>
 
         {/* 콘텐츠 */}
-        <div className="px-8 py-6">{children}</div>
+        <div className="px-4 md:px-8 py-4 md:py-6">{children}</div>
       </main>
     </div>
   );

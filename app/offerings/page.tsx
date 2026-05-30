@@ -13,6 +13,40 @@ type Row = Partial<Offering> & { _autoKind?: boolean; _localId?: number };
 
 let localIdCounter = 1;
 
+function fmt(n: number | undefined | null) {
+  if (!n) return "";
+  return n.toLocaleString("ko-KR");
+}
+
+function AmountInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [focused, setFocused] = useState(false);
+  const [display, setDisplay] = useState(value > 0 ? fmt(value) : "");
+
+  useEffect(() => {
+    if (!focused) setDisplay(value > 0 ? fmt(value) : "");
+  }, [value, focused]);
+
+  return (
+    <input
+      type="text"
+      value={focused ? (value > 0 ? String(value) : "") : display}
+      onChange={(e) => {
+        const raw = e.target.value.replace(/,/g, "");
+        const n = parseInt(raw) || 0;
+        onChange(n);
+        setDisplay(raw);
+      }}
+      onFocus={() => setFocused(true)}
+      onBlur={() => {
+        setFocused(false);
+        setDisplay(value > 0 ? fmt(value) : "");
+      }}
+      placeholder="0"
+      className="text-right"
+    />
+  );
+}
+
 export default function OfferingsPage() {
   const [rows, setRows]         = useState<Row[]>([]);
   const [quickText, setQuickText] = useState("");
@@ -21,22 +55,24 @@ export default function OfferingsPage() {
   const [saving, setSaving]     = useState(false);
   const [saved, setSaved]       = useState(false);
 
+  function makeBlankRows(n = 5): Row[] {
+    return Array.from({ length: n }, () => ({
+      _localId: localIdCounter++, entry_date: TODAY,
+      kind: "", member_name: "", amount: 0, note: "", week_id: weekId,
+    }));
+  }
+
   const loadRows = useCallback(async () => {
     const res = await fetch(`/api/offerings?week_id=${weekId}`);
     const data: Offering[] = await res.json();
-    setRows(data.map((r) => ({ ...r, _localId: localIdCounter++ })));
-  }, [weekId]);
+    const existing = data.map((r) => ({ ...r, _localId: localIdCounter++ }));
+    setRows([...existing, ...makeBlankRows(5)]);
+  }, [weekId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { loadRows(); }, [loadRows]);
 
   function addEmptyRows(n = 10) {
-    setRows((prev) => [
-      ...prev,
-      ...Array.from({ length: n }, () => ({
-        _localId: localIdCounter++, entry_date: TODAY,
-        kind: "", member_name: "", amount: 0, note: "", week_id: weekId,
-      })),
-    ]);
+    setRows((prev) => [...prev, ...makeBlankRows(n)]);
   }
 
   function updateRow(idx: number, field: string, value: string | number) {
@@ -98,19 +134,26 @@ export default function OfferingsPage() {
     setQuickText("");
   }
 
+  const totalAmount = rows.filter((r) => r.id).reduce((s, r) => s + (r.amount || 0), 0);
+
   return (
     <PageWrapper
       title="헌금 입력"
       subtitle={`${weekId}주차 · 이름 입력 시 종류 자동감지 · 엑셀 일괄 업로드 가능`}
     >
       {/* 툴바 */}
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
         <label className="text-sm font-medium text-slate-600">주차</label>
         <input
           type="text" value={weekId}
           onChange={(e) => setWeekId(e.target.value)}
           className="border border-slate-300 rounded px-3 py-1.5 text-sm w-24"
         />
+        {totalAmount > 0 && (
+          <span className="text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg">
+            합계: {totalAmount.toLocaleString("ko-KR")}원
+          </span>
+        )}
         <button onClick={() => setShowUpload(true)}
           className="ml-auto flex items-center gap-1.5 border border-slate-300 text-sm px-4 py-1.5 rounded-lg hover:bg-slate-50">
           📂 엑셀 업로드
@@ -146,7 +189,7 @@ export default function OfferingsPage() {
                 <th className="w-32">날짜</th>
                 <th className="w-40">종류 ← 자동감지</th>
                 <th className="w-36">이름 (자동완성)</th>
-                <th className="w-32">금액 (원)</th>
+                <th className="w-36">금액 (원)</th>
                 <th className="w-36">비고</th>
                 <th className="w-10"></th>
               </tr>
@@ -174,9 +217,10 @@ export default function OfferingsPage() {
                       placeholder="이름 입력" />
                   </td>
                   <td>
-                    <input type="number" value={row.amount || ""}
-                      onChange={(e) => updateRow(i, "amount", parseInt(e.target.value) || 0)}
-                      placeholder="0" className="text-right" />
+                    <AmountInput
+                      value={row.amount || 0}
+                      onChange={(v) => updateRow(i, "amount", v)}
+                    />
                   </td>
                   <td>
                     <input type="text" value={row.note || ""}
@@ -199,7 +243,6 @@ export default function OfferingsPage() {
         + 10줄 추가
       </button>
 
-      {/* 업로드 모달 */}
       {showUpload && (
         <UploadModal type="offering" weekId={weekId}
           onSuccess={(n) => { setShowUpload(false); loadRows(); alert(`${n}건 업로드 완료`); }}

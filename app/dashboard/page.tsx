@@ -3,8 +3,15 @@ import { useEffect, useState } from "react";
 import { PageWrapper } from "@/components/layout/PageWrapper";
 import { FeedbackForm } from "@/components/FeedbackForm";
 import type { Offering, Expense } from "@/lib/db";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+} from "recharts";
 
 const WEEK_ID = "5-3";
+
+const EMERALD = ["#10b981", "#34d399", "#6ee7b7", "#a7f3d0", "#d1fae5", "#ecfdf5"];
+const AMBER   = ["#f59e0b", "#fbbf24", "#fcd34d", "#fde68a", "#fef3c7", "#fffbeb"];
 
 export default function DashboardPage() {
   const [offerings, setOfferings] = useState<Offering[]>([]);
@@ -32,7 +39,11 @@ export default function DashboardPage() {
   const expByCat: Record<string, number> = {};
   expenses.forEach((r) => { expByCat[r.category] = (expByCat[r.category] || 0) + r.amount; });
 
+  const incomeData = Object.entries(incomeByKind).map(([name, value]) => ({ name, value }));
+  const expData    = Object.entries(expByCat).map(([name, value]) => ({ name, value }));
+
   function fmt(n: number) { return n.toLocaleString("ko-KR") + "원"; }
+  function fmtTick(v: number) { return v >= 10000 ? `${(v / 10000).toFixed(0)}만` : String(v); }
 
   return (
     <PageWrapper title="대시보드" subtitle={`${WEEK_ID}주차 현황`}>
@@ -41,13 +52,66 @@ export default function DashboardPage() {
       ) : (
         <>
           {/* KPI 카드 */}
-          <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <KpiCard label="이번 주 수입" value={fmt(totalIncome)} color="emerald" icon="↑" />
             <KpiCard label="이번 주 지출" value={fmt(totalExpense)} color="amber" icon="↓" />
             <KpiCard label="잔액" value={fmt(balance)} color={balance >= 0 ? "blue" : "red"} icon="=" />
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          {/* 차트 영역 */}
+          {(incomeData.length > 0 || expData.length > 0) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              {/* 수입 막대 차트 */}
+              {incomeData.length > 0 && (
+                <div className="bg-white rounded-xl border border-slate-200 p-5">
+                  <h2 className="font-bold text-slate-800 mb-4 text-sm">수입 종류별 현황</h2>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={incomeData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                      <YAxis tickFormatter={fmtTick} tick={{ fontSize: 11 }} width={48} />
+                      <Tooltip formatter={(v) => [fmt(Number(v)), "금액"]} />
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                        {incomeData.map((_, i) => (
+                          <Cell key={i} fill={EMERALD[i % EMERALD.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* 지출 파이 차트 */}
+              {expData.length > 0 && (
+                <div className="bg-white rounded-xl border border-slate-200 p-5">
+                  <h2 className="font-bold text-slate-800 mb-4 text-sm">지출 계정과목별 현황</h2>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <PieChart>
+                      <Pie
+                        data={expData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                        labelLine={false}
+                      >
+                        {expData.map((_, i) => (
+                          <Cell key={i} fill={AMBER[i % AMBER.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(v) => [fmt(Number(v)), "금액"]} />
+                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 상세 테이블 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* 수입 내역 */}
             <div className="bg-white rounded-xl border border-slate-200 p-5">
               <h2 className="font-bold text-slate-800 mb-3">수입 내역</h2>
@@ -115,7 +179,7 @@ function KpiCard({ label, value, color, icon }: { label: string; value: string; 
   return (
     <div className={`rounded-xl border p-5 ${colors[color]}`}>
       <div className="text-xs font-medium opacity-70 mb-1">{icon} {label}</div>
-      <div className="text-2xl font-bold">{value}</div>
+      <div className="text-xl md:text-2xl font-bold">{value}</div>
     </div>
   );
 }
