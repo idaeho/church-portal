@@ -13,7 +13,7 @@
 
 import "dotenv/config";
 import { neon } from "@neondatabase/serverless";
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { writeFileSync, unlinkSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -71,27 +71,30 @@ async function main() {
     "-- 자동 발송 (꿈꾸는교회 재정관리 포털)",
   ].join("\n");
 
-  // 임시 파일에 본문 저장
+  // 임시 파일에 본문 저장 (mode 0o600: 소유자 읽기/쓰기만)
   const tmpFile = join(tmpdir(), `church-feedback-${Date.now()}.txt`);
-  writeFileSync(tmpFile, body, "utf-8");
+  writeFileSync(tmpFile, body, { encoding: "utf-8", mode: 0o600 });
 
+  let delivered = false;
   try {
-    // gog CLI로 이메일 발송
-    // gog CLI가 없으면 아래 줄을 원하는 CLI 명령으로 교체하세요.
-    // 예: gam sendemail ... / mutt -s subject ... / mail -s subject ...
-    const cmd = `gog sendemail --to="${TO_EMAIL}" --subject="${subject}" --body-file="${tmpFile}"`;
-    console.log(`실행: ${cmd}`);
-    execSync(cmd, { stdio: "inherit" });
+    // execFileSync 사용으로 shell injection 방지 (TO_EMAIL 직접 보간 안 함)
+    execFileSync("gog", [
+      "sendemail",
+      `--to=${TO_EMAIL}`,
+      `--subject=${subject}`,
+      `--body-file=${tmpFile}`,
+    ], { stdio: "inherit" });
     console.log(`이메일 발송 완료 → ${TO_EMAIL}`);
+    delivered = true;
   } catch (e) {
-    // gog CLI 없으면 본문만 출력
-    console.warn("gog CLI 실패 또는 미설치. 피드백 내용 출력:");
-    console.log("\n" + body);
+    console.error("gog CLI 실패 또는 미설치. 발송 미완료 — 상태 업데이트 건너뜀.");
   } finally {
     unlinkSync(tmpFile);
   }
 
-  // 발송 완료 항목 reviewed 처리
+  if (!delivered) return;
+
+  // 발송 성공 후에만 reviewed 처리
   const ids = items.map((f) => f.id as number);
   await sql`
     UPDATE feedback

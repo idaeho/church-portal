@@ -14,14 +14,17 @@ export async function GET(req: NextRequest) {
   let rows;
   if (query) {
     const hash = hashForSearch(query);
-    rows = await sql`SELECT * FROM members WHERE name_hash = ${hash} AND is_active = true ORDER BY name`;
+    rows = await sql`SELECT id, name_enc, name_hash, is_active, created_at FROM members WHERE name_hash = ${hash} AND is_active = true ORDER BY created_at`;
   } else {
-    rows = await sql`SELECT * FROM members WHERE is_active = true ORDER BY name LIMIT 200`;
+    rows = await sql`SELECT id, name_enc, name_hash, is_active, created_at FROM members WHERE is_active = true ORDER BY created_at LIMIT 200`;
   }
 
   const decrypted = rows.map((r) => ({
-    ...r,
-    name: r.name_enc ? decrypt(r.name_enc as string) : (r.name ?? ""),
+    id: r.id,
+    name: r.name_enc ? decrypt(r.name_enc as string) : "",
+    name_hash: r.name_hash,
+    is_active: r.is_active,
+    created_at: r.created_at,
   }));
   return NextResponse.json(decrypted);
 }

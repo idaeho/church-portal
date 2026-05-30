@@ -52,9 +52,10 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // x-nonce: Next.js 14가 자동으로 인라인 부트스트랩 스크립트에 nonce 적용
+  // x-nonce + 요청측 CSP 헤더: Next.js가 두 헤더 모두에서 nonce 추출
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", csp);
 
   const response = NextResponse.next({
     request: { headers: requestHeaders },
