@@ -1,0 +1,123 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #3b70db;
+  --sidebar-w: 260px;
+}
+
+body {
+  font-family: "Pretendard", "Noto Sans KR", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 엑셀 그리드 스타일 */
+.excel-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+}
+
+.excel-table th {
+  background: #1e293b;
+  color: #fff;
+  font-weight: 600;
+  padding: 8px 10px;
+  text-align: left;
+  border: 1px solid #334155;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.excel-table td {
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  height: 34px;
+  vertical-align: middle;
+}
+
+.excel-table td.row-num {
+  background: #f8fafc;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  width: 40px;
+  user-select: none;
+  border-right: 2px solid #cbd5e1;
+}
+
+.excel-table td input,
+.excel-table td select {
+  width: 100%;
+  height: 100%;
+  padding: 4px 8px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.excel-table td:focus-within:not(.row-num):not(.col-del) {
+  background: #dbeafe;
+  box-shadow: inset 0 0 0 2px #3b70db;
+  position: relative;
+  z-index: 1;
+}
+
+.excel-table td.auto-fill {
+  background: rgba(16, 185, 129, 0.08);
+  position: relative;
+}
+
+.excel-table td.auto-fill::after {
+  content: "자동";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 8px;
+  font-weight: 700;
+  color: #059669;
+  background: rgba(16, 185, 129, 0.18);
+  padding: 1px 4px;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.excel-table td.auto-fill select {
+  color: #059669;
+  font-weight: 600;
+}
+
+/* 빠른입력 바 */
+.quick-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+
+.quick-bar.offering { background: #f0fdf4; border: 1px solid #a7f3d0; }
+.quick-bar.expense  { background: #fffbeb; border: 1px solid #fcd34d; }
+
+/* 피드백 섹션 */
+.feedback-section {
+  margin-top: 48px;
+  padding: 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+/* 스크롤바 */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
