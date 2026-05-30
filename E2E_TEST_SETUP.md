@@ -17,8 +17,8 @@ cp .env.test .env.local
 
 # 다음 변수들 확인/수정:
 # PLAYWRIGHT_TEST_BASE_URL=http://localhost:3000
-# TEST_EMAIL=idaeho@gmail.com
-# TEST_PASSWORD=DreamChurch@#$
+# TEST_EMAIL=admin@your-church.example
+# TEST_PASSWORD=your-strong-password
 ```
 
 ### 3. 개발 서버 시작
@@ -99,8 +99,8 @@ npm run test:e2e -- --trace on-first-retry
 
 ```bash
 # Settings > Secrets and variables > Actions > New repository secret
-TEST_EMAIL=idaeho@gmail.com
-TEST_PASSWORD=DreamChurch@#$
+TEST_EMAIL=admin@your-church.example
+TEST_PASSWORD=your-strong-password
 DATABASE_URL=your_db_url
 NEXTAUTH_SECRET=your_secret
 ```

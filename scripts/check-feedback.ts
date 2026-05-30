@@ -19,10 +19,14 @@ import { join } from "path";
 import { tmpdir } from "os";
 
 const DATABASE_URL = process.env.DATABASE_URL;
-const TO_EMAIL     = process.env.GOG_TO || process.env.NOTIFY_EMAIL || "idaeho@gmail.com";
+const TO_EMAIL     = process.env.GOG_TO || process.env.NOTIFY_EMAIL;
 
 if (!DATABASE_URL) {
   console.error("DATABASE_URL 환경변수 없음");
+  process.exit(1);
+}
+if (!TO_EMAIL) {
+  console.error("GOG_TO 또는 NOTIFY_EMAIL 환경변수 없음");
   process.exit(1);
 }
 

@@ -63,7 +63,7 @@
 | 항목 | 설명 |
 |-----|------|
 | **전제조건** | 애플리케이션이 `/login` 페이지로 접근 가능 |
-| **입력** | 이메일: `idaeho@gmail.com`, 비밀번호: `DreamChurch@#$` |
+| **입력** | 이메일: `admin@your-church.example`, 비밀번호: `your-strong-password` |
 | **행동** | 1. 이메일 입력란 클릭 후 이메일 입력 <br/> 2. 비밀번호 입력란 클릭 후 비밀번호 입력 <br/> 3. "로그인" 버튼 클릭 |
 | **기대결과** | 1. 페이지가 `/dashboard`로 리다이렉트됨 <br/> 2. 대시보드에 사용자명 또는 "안녕하세요" 메시지 표시 <br/> 3. 로그아웃 버튼 가시화 |
 | **검증 포인트** | - URL 변경 확인 (`/dashboard` 포함) <br/> - 헤더에 사용자 정보 표시 <br/> - API 호출 성공 (상태 200) |
@@ -73,7 +73,7 @@
 | 항목 | 설명 |
 |-----|------|
 | **전제조건** | 사용자가 `/login` 페이지에 있음 |
-| **입력** | 이메일: `idaeho@gmail.com`, 비밀번호: `wrongpassword123` |
+| **입력** | 이메일: `admin@your-church.example`, 비밀번호: `wrongpassword123` |
 | **행동** | 1. 이메일 및 잘못된 비밀번호 입력 <br/> 2. "로그인" 버튼 클릭 |
 | **기대결과** | 1. `/login` 페이지에서 머무름 (리다이렉트 없음) <br/> 2. 에러 메시지 표시: "이메일 또는 비밀번호가 잘못되었습니다" <br/> 3. 입력 필드는 유지됨 |
 | **검증 포인트** | - 에러 메시지 텍스트 확인 <br/> - URL이 변경되지 않음 <br/> - form 재입력 가능 |
@@ -322,8 +322,8 @@ CI/CD: GitHub Actions에서 시크릿 설정
 ```bash
 # .env.test
 PLAYWRIGHT_TEST_BASE_URL=http://localhost:3000
-TEST_EMAIL=idaeho@gmail.com
-TEST_PASSWORD=DreamChurch@#$
+TEST_EMAIL=admin@your-church.example
+TEST_PASSWORD=your-strong-password
 ```
 
 ### 3.3 로컬 테스트 실행
