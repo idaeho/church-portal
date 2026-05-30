@@ -19,7 +19,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 
 const DATABASE_URL = process.env.DATABASE_URL;
-const TO_EMAIL     = process.env.GOG_TO || process.env.NOTIFY_EMAIL || "***REMOVED***";
+const TO_EMAIL     = process.env.GOG_TO || process.env.NOTIFY_EMAIL || "idaeho@gmail.com";
 
 if (!DATABASE_URL) {
   console.error("DATABASE_URL 환경변수 없음");

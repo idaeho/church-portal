@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test'
 
-const TEST_EMAIL = process.env.TEST_EMAIL || '***REMOVED***'
-const TEST_PASSWORD = process.env.TEST_PASSWORD || '***REMOVED***'
+const TEST_EMAIL = process.env.TEST_EMAIL
+const TEST_PASSWORD = process.env.TEST_PASSWORD
+if (!TEST_EMAIL || !TEST_PASSWORD) throw new Error('TEST_EMAIL / TEST_PASSWORD 환경변수 필요')
 
 test.describe('Authentication', () => {
   test.beforeEach(async ({ page }) => {

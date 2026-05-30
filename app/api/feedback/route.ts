@@ -16,11 +16,11 @@ export async function POST(req: NextRequest) {
   const submitterEnc = encrypt(submitterVal);
 
   const result = await sql`
-    INSERT INTO feedback (page, content, submitter, submitter_enc)
-    VALUES (${page}, ${content.trim()}, ${submitterVal}, ${submitterEnc})
-    RETURNING id, page, content, submitter, status, created_at
+    INSERT INTO feedback (page, content, submitter_enc)
+    VALUES (${page}, ${content.trim()}, ${submitterEnc})
+    RETURNING id, page, content, status, created_at
   `;
-  return NextResponse.json(result[0], { status: 201 });
+  return NextResponse.json({ ...result[0], submitter: submitterVal }, { status: 201 });
 }
 
 export async function GET(req: NextRequest) {

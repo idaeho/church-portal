@@ -37,10 +37,10 @@ export async function POST(req: NextRequest) {
   const hashName = hashForSearch(name.trim());
 
   const result = await sql`
-    INSERT INTO members (name, name_enc, name_hash)
-    VALUES (${name.trim()}, ${encName}, ${hashName})
+    INSERT INTO members (name_enc, name_hash)
+    VALUES (${encName}, ${hashName})
     ON CONFLICT DO NOTHING
-    RETURNING id, name, is_active, created_at
+    RETURNING id, is_active, created_at
   `;
-  return NextResponse.json(result[0] ?? { message: "이미 존재" }, { status: 201 });
+  return NextResponse.json(result[0] ? { ...result[0], name: name.trim() } : { message: "이미 존재" }, { status: 201 });
 }

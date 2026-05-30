@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { parseOfferingExcel, parseExpenseExcel } from "@/lib/excel";
+import { encrypt, hashForSearch } from "@/lib/crypto";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -28,10 +29,12 @@ export async function POST(req: NextRequest) {
         SELECT COALESCE(MAX(seq_no), 0) + 1 AS next_seq
         FROM offerings WHERE week_id = ${weekId}
       `;
+      const encName  = row.member_name ? encrypt(row.member_name) : null;
+      const hashName = row.member_name ? hashForSearch(row.member_name) : null;
       await sql`
-        INSERT INTO offerings (week_id, entry_date, seq_no, kind, member_name, amount, note)
+        INSERT INTO offerings (week_id, entry_date, seq_no, kind, amount, note, member_name_enc, member_name_hash)
         VALUES (${weekId}, ${row.entry_date}, ${seqResult[0].next_seq},
-                ${row.kind}, ${row.member_name}, ${row.amount}, ${row.note})
+                ${row.kind}, ${row.amount}, ${row.note}, ${encName}, ${hashName})
       `;
       inserted++;
     }

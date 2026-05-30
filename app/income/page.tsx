@@ -12,7 +12,7 @@ export default function IncomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/offerings").then((r) => r.json()).then((d) => { setRows(d); setLoading(false); });
+    fetch("/api/offerings?limit=10000").then((r) => r.json()).then((d) => { setRows(d); setLoading(false); });
   }, []);
 
   const filtered = filter === "전체" ? rows : rows.filter((r) => r.kind === filter);

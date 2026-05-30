@@ -36,7 +36,7 @@ npm run db:migrate
 ### 4. 관리자 계정 생성
 
 ```bash
-ADMIN_EMAIL=***REMOVED*** ADMIN_PASSWORD=your_password npx tsx scripts/setup-admin.ts
+ADMIN_EMAIL=idaeho@gmail.com ADMIN_PASSWORD=your_password npx tsx scripts/setup-admin.ts
 ```
 
 ### 5. 개발 서버 실행

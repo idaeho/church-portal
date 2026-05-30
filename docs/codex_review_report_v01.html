@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Codex 코드 리뷰 보고서 — 꿈꾸는교회 재정관리 포털</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --scale: 1.15;
+    --navy: #1e3a5f;
+    --navy-light: #2a4f7f;
+    --danger: #dc2626;
+    --danger-bg: #fef2f2;
+    --danger-border: #fecaca;
+    --warning: #d97706;
+    --warning-bg: #fffbeb;
+    --warning-border: #fde68a;
+    --success: #059669;
+    --success-bg: #ecfdf5;
+    --success-border: #a7f3d0;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: calc(1rem * var(--scale));
+    color: var(--gray-800);
+    background: #f8fafc;
+    line-height: 1.6;
+  }
+  h1 { font-size: calc(2rem * var(--scale)); font-weight: 700; }
+  h2 { font-size: calc(1.5rem * var(--scale)); font-weight: 700; }
+  h3 { font-size: calc(1.25rem * var(--scale)); font-weight: 600; }
+
+  pre { overflow-x: auto; white-space: pre; word-break: normal; word-wrap: normal; }
+  code { white-space: pre; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85em; }
+
+  /* Header */
+  .header {
+    background: var(--navy);
+    color: white;
+    padding: 2.5rem 3rem;
+    border-bottom: 4px solid var(--danger);
+  }
+  .header-meta {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    opacity: 0.85;
+    flex-wrap: wrap;
+  }
+  .header-meta span { display: flex; align-items: center; gap: 0.3rem; }
+
+  /* Nav */
+  .sticky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: white;
+    border-bottom: 2px solid var(--gray-200);
+    padding: 0.75rem 3rem;
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: auto;
+  }
+  .sticky-nav a {
+    color: var(--navy);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+  .sticky-nav a:hover { background: var(--gray-100); }
+
+  /* Container */
+  .container { max-width: 1200px; margin: 0 auto; padding: 2rem 3rem; }
+  .section { margin-bottom: 3.5rem; }
+
+  /* Gate banner */
+  .gate-banner {
+    background: var(--danger);
+    color: white;
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .gate-label {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .gate-sub { font-size: 0.95rem; opacity: 0.9; }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid var(--gray-200);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .stat-card .num { font-size: 2rem; font-weight: 700; line-height: 1; }
+  .stat-card .lbl { font-size: 0.85rem; color: var(--gray-600); margin-top: 0.25rem; }
+  .stat-danger .num { color: var(--danger); }
+  .stat-warning .num { color: var(--warning); }
+  .stat-info .num { color: var(--navy); }
+
+  /* Section heading */
+  .section-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--gray-200);
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.65rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+  .badge-danger { background: var(--danger); color: white; }
+  .badge-warning { background: var(--warning); color: white; }
+  .badge-success { background: var(--success); color: white; }
+  .badge-info { background: var(--navy); color: white; }
+
+  /* Finding cards */
+  .findings-list { display: flex; flex-direction: column; gap: 1rem; }
+  .finding-card {
+    background: white;
+    border-radius: 10px;
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .finding-card.p1 { border-left: 5px solid var(--danger); }
+  .finding-card.p2 { border-left: 5px solid var(--warning); }
+  .finding-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+    flex-wrap: wrap;
+  }
+  .finding-id {
+    font-family: 'SF Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: var(--gray-200);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .finding-title { font-weight: 700; flex: 1; min-width: 200px; }
+  .finding-file {
+    font-family: 'SF Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--gray-600);
+    background: var(--gray-100);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .finding-body { padding: 1rem 1.25rem; }
+  .finding-body p { color: var(--gray-700); line-height: 1.65; }
+  .critical-tag {
+    display: inline-block;
+    background: #fef2f2;
+    color: var(--danger);
+    border: 1px solid var(--danger-border);
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.15rem 0.6rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+  }
+
+  /* Roadmap */
+  .phase-block {
+    margin-bottom: 2rem;
+  }
+  .phase-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    background: var(--navy);
+    color: white;
+    padding: 0.3rem 1rem;
+    border-radius: 9999px;
+    margin-bottom: 1rem;
+  }
+  .phase-label.today { background: var(--danger); }
+  .phase-label.week { background: var(--warning); }
+  .phase-label.sprint { background: var(--success); }
+  .roadmap-items { display: flex; flex-direction: column; gap: 0.6rem; }
+  .roadmap-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 0.85rem 1.1rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .roadmap-item .step-num {
+    min-width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .roadmap-item.danger .step-num { background: var(--danger-bg); color: var(--danger); border: 2px solid var(--danger); }
+  .roadmap-item.warning .step-num { background: var(--warning-bg); color: var(--warning); border: 2px solid var(--warning); }
+  .roadmap-item.success .step-num { background: var(--success-bg); color: var(--success); border: 2px solid var(--success); }
+  .roadmap-item .item-content { flex: 1; }
+  .roadmap-item .item-title { font-weight: 600; }
+  .roadmap-item .item-desc { font-size: 0.9rem; color: var(--gray-600); margin-top: 0.2rem; }
+  .roadmap-item code { background: var(--gray-100); padding: 0.1rem 0.35rem; border-radius: 3px; font-size: 0.85em; }
+
+  /* Score chart */
+  .score-row {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 1rem;
+  }
+  .score-arrow {
+    font-size: 2rem;
+    color: var(--success);
+    font-weight: 700;
+  }
+  .grade-badge {
+    font-size: 2.5rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .grade-d { color: var(--danger); }
+  .grade-a { color: var(--warning); }
+  .grade-aplus { color: var(--success); }
+  .grade-desc { font-size: 0.9rem; color: var(--gray-600); margin-top: 0.25rem; }
+
+  /* Checklist */
+  .checklist { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+  .checklist li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+  }
+  .checklist li .check-box {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--gray-400, #9ca3af);
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .checklist li code { background: var(--gray-100); padding: 0.1rem 0.35rem; border-radius: 3px; font-size: 0.85em; }
+  .checklist li.urgent { border-left: 3px solid var(--danger); }
+  .checklist li.medium { border-left: 3px solid var(--warning); }
+  .checklist li.normal { border-left: 3px solid var(--success); }
+
+  /* Footer */
+  .footer {
+    background: var(--navy);
+    color: rgba(255,255,255,0.7);
+    padding: 1.5rem 3rem;
+    font-size: 0.85rem;
+    margin-top: 4rem;
+  }
+  .footer strong { color: white; }
+</style>
+</head>
+<body>
+
+<!-- ─── HEADER ─── -->
+<div class="header">
+  <div style="font-size:0.85rem;opacity:0.7;margin-bottom:0.5rem;letter-spacing:0.05em">CODEX 독립 코드 리뷰 보고서</div>
+  <h1>꿈꾸는교회 재정관리 포털<br>설계·코드 리뷰 결과 및 수정계획</h1>
+  <div class="header-meta">
+    <span>📅 2026-05-30</span>
+    <span>🔍 리뷰어: Codex CLI (OpenAI) — 독립 2nd opinion</span>
+    <span>🌿 브랜치: main</span>
+    <span>📁 24 files · +3,358줄</span>
+    <span>🏛️ church-portal v2 (PII 암호화 + 보안 헤더 + E2E 추가)</span>
+  </div>
+</div>
+
+<!-- ─── STICKY NAV ─── -->
+<nav class="sticky-nav" aria-label="섹션 내비게이션">
+  <a href="#summary">종합 현황</a>
+  <a href="#p1">P1 Critical ×5</a>
+  <a href="#p2">P2 Advisory ×5</a>
+  <a href="#roadmap">수정 로드맵</a>
+  <a href="#score">보안 점수</a>
+  <a href="#checklist">체크리스트</a>
+</nav>
+
+<div class="container">
+
+  <!-- ─── 섹션 1: 종합 현황 ─── -->
+  <section class="section" id="summary">
+    <div class="section-heading">
+      <h2>종합 현황</h2>
+      <span class="badge badge-danger">GATE: FAIL</span>
+    </div>
+
+    <div class="gate-banner">
+      <div>
+        <div class="gate-label">GATE: FAIL</div>
+        <div class="gate-sub">P1 Critical 5건 — 즉각 조치 필요</div>
+      </div>
+      <div style="flex:1"></div>
+      <div style="font-size:0.9rem;line-height:1.8">
+        리뷰 방법론: Codex CLI (OpenAI Reasoning Model)<br>
+        독립 2nd opinion — Claude Code 자체 리뷰와 교차 검증
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card stat-danger">
+        <div class="num">5</div>
+        <div class="lbl">P1 Critical — 즉시 수정</div>
+      </div>
+      <div class="stat-card stat-warning">
+        <div class="num">5</div>
+        <div class="lbl">P2 Advisory — 단·중기 수정</div>
+      </div>
+      <div class="stat-card stat-info">
+        <div class="num">10</div>
+        <div class="lbl">총 발견 항목</div>
+      </div>
+      <div class="stat-card stat-info">
+        <div class="num">24</div>
+        <div class="lbl">변경 파일 수</div>
+      </div>
+      <div class="stat-card stat-info">
+        <div class="num">3,358</div>
+        <div class="lbl">삽입 코드 라인</div>
+      </div>
+    </div>
+
+    <!-- Lead card -->
+    <div style="background:white;border:1px solid var(--gray-200);border-radius:12px;padding:1.5rem 2rem;box-shadow:0 1px 3px rgba(0,0,0,0.06)">
+      <div style="font-size:0.9rem;color:var(--gray-600);margin-bottom:0.75rem;font-weight:600">💡 리뷰 핵심 메시지</div>
+      <p style="color:var(--gray-700);line-height:1.7">
+        암호화 <em>설계는 올바르다</em> — AES-256-GCM + HMAC-SHA256 해시 구조는 적절하다.
+        문제는 <strong>불완전한 구현</strong>이다: 스키마에 컬럼이 없고, 평문을 암호문 옆에 동시 저장하고, 업로드 경로를 빠뜨렸다.
+        또한 테스트 자격증명이 git에 커밋되어 있어 즉각 로테이션이 필요하다.
+        설계를 폐기할 필요는 없다 — <strong>구현 5단계를 완성하면</strong> 목표한 보안 수준에 도달한다.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── 섹션 2: P1 Critical ─── -->
+  <section class="section" id="p1">
+    <div class="section-heading">
+      <h2>P1 Critical Findings</h2>
+      <span class="badge badge-danger">5건 — 즉시 수정</span>
+    </div>
+
+    <div class="findings-list">
+
+      <div class="finding-card p1">
+        <div class="finding-header">
+          <span class="finding-id">P1-01</span>
+          <span class="finding-title">로그인 자격증명 git에 커밋됨</span>
+          <span class="finding-file">.env.test:5-6</span>
+          <span class="badge badge-danger">즉각 조치</span>
+        </div>
+        <div class="finding-body">
+          <p>
+            <code>email</code>과 <code>password</code>가 <code>.env.test</code>에 평문으로 커밋되어 있다.
+            저장소 읽기 권한이 있는 누구든 해당 계정으로 로그인 가능하다.
+            E2E spec 파일의 fallback 상수(<code>TEST_EMAIL</code>, <code>TEST_PASSWORD</code>)도 동일 문제다.
+          </p>
+          <p style="margin-top:0.5rem"><strong>조치:</strong> <code>.env.test</code> 파일에서 자격증명 제거 → <code>git-secrets</code> 또는 BFG로 git history 정리 → 관련 계정 비밀번호 즉시 로테이션.</p>
+          <span class="critical-tag">⚠ 지금 이 순간도 노출 중 — 즉시 로테이션 필요</span>
+        </div>
+      </div>
+
+      <div class="finding-card p1">
+        <div class="finding-header">
+          <span class="finding-id">P1-02</span>
+          <span class="finding-title">암호화 컬럼 마이그레이션 스키마에 없음</span>
+          <span class="finding-file">schema.sql · scripts/migrate.ts</span>
+        </div>
+        <div class="finding-body">
+          <p>
+            API 코드는 <code>member_name_enc</code>, <code>member_name_hash</code>, <code>submitter_enc</code>, <code>name_enc</code>, <code>name_hash</code>에 INSERT하지만,
+            이 컬럼들이 <code>schema.sql</code>과 <code>scripts/migrate.ts</code>에 존재하지 않는다.
+            클린 체크아웃 후 마이그레이션 실행 시 모든 INSERT가 <code>column does not exist</code>로 실패한다.
+          </p>
+          <p style="margin-top:0.5rem"><strong>조치:</strong> <code>schema.sql</code>에 5개 컬럼 <code>ALTER TABLE</code> 추가, <code>scripts/migrate.ts</code>에 실행 가능한 DDL 포함.</p>
+        </div>
+      </div>
+
+      <div class="finding-card p1">
+        <div class="finding-header">
+          <span class="finding-id">P1-03</span>
+          <span class="finding-title">평문 PII가 암호문 옆에 동시 저장됨</span>
+          <span class="finding-file">offerings/route.ts:45-46 · feedback/route.ts · members/route.ts</span>
+        </div>
+        <div class="finding-body">
+          <p>
+            <code>member_name</code>, <code>submitter</code>, <code>name</code> 평문 컬럼이 암호화 컬럼과 함께 INSERT된다.
+            DB가 노출되면 암호화된 값이 있더라도 원본 평문이 그대로 읽힌다 — 암호화의 의미가 없다.
+          </p>
+          <p style="margin-top:0.5rem"><strong>조치:</strong> 3개 route의 INSERT에서 평문 컬럼 제거. 조회 시 <code>decrypt()</code>로 복원. 기존 데이터는 마이그레이션 스크립트로 암호화 후 평문 컬럼 DROP.</p>
+        </div>
+      </div>
+
+      <div class="finding-card p1">
+        <div class="finding-header">
+          <span class="finding-id">P1-04</span>
+          <span class="finding-title">Excel 업로드 경로에 암호화 미적용</span>
+          <span class="finding-file">app/api/upload/route.ts</span>
+        </div>
+        <div class="finding-body">
+          <p>
+            <code>app/api/upload/route.ts</code>는 Excel에서 추출한 <code>member_name</code>을 평문 그대로 INSERT한다.
+            업로드로 입력된 헌금 데이터는 암호화·해시가 전혀 없는 상태로 DB에 저장된다.
+          </p>
+          <p style="margin-top:0.5rem"><strong>조치:</strong> 업로드 route에 <code>encrypt()</code> + <code>hashForSearch()</code> 적용. offerings API와 동일한 패턴 사용.</p>
+        </div>
+      </div>
+
+      <div class="finding-card p1">
+        <div class="finding-header">
+          <span class="finding-id">P1-05</span>
+          <span class="finding-title">Playwright CI 미구성 — 클린 체크아웃 빌드 실패</span>
+          <span class="finding-file">package.json · playwright.config.ts · .github/workflows/e2e.yml</span>
+        </div>
+        <div class="finding-body">
+          <p>
+            <code>@playwright/test</code>가 <code>package.json</code> <code>devDependencies</code>에 없다.
+            <code>npm run test:e2e</code> 스크립트도 미정의다.
+            CI 워크플로우가 존재하지만 실행 시 즉시 실패한다.
+          </p>
+          <p style="margin-top:0.5rem"><strong>조치:</strong> <code>npm install -D @playwright/test</code> 실행 → <code>package.json</code>의 <code>scripts</code>에 <code>"test:e2e": "playwright test"</code> 추가.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ─── 섹션 3: P2 Advisory ─── -->
+  <section class="section" id="p2">
+    <div class="section-heading">
+      <h2>P2 Advisory Findings</h2>
+      <span class="badge badge-warning">5건 — 단·중기 수정</span>
+    </div>
+
+    <div class="findings-list">
+
+      <div class="finding-card p2">
+        <div class="finding-header">
+          <span class="finding-id">P2-01</span>
+          <span class="finding-title">CI E2E 서버에 ENCRYPTION_KEY 미주입</span>
+          <span class="finding-file">.github/workflows/e2e.yml:43-45</span>
+        </div>
+        <div class="finding-body">
+          <p>
+            CI에서 기동하는 Next.js 서버가 <code>ENCRYPTION_KEY</code>를 받지 못한다.
+            인증된 API 호출 시 <code>encrypt()</code>가 500을 반환 — E2E 테스트 전체가 의미 없어진다.
+          </p>
+          <p style="margin-top:0.5rem"><strong>조치:</strong> GitHub Secrets에 <code>ENCRYPTION_KEY</code> 등록 → <code>e2e.yml</code>의 서버 기동 step에 <code>env: ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}</code> 추가.</p>
+        </div>
+      </div>
+
+      <div class="finding-card p2">
+        <div class="finding-header">
+          <span class="finding-id">P2-02</span>
+          <span class="finding-title">CSP에 unsafe-inline + unsafe-eval 동시 허용</span>
+          <span class="finding-file">next.config.mjs:8</span>
+        </div>
+        <div class="finding-body">
+          <p>
+            <code>Content-Security-Policy</code>에 <code>'unsafe-inline'</code>과 <code>'unsafe-eval'</code> 두 지시어가 함께 있다.
+            인젝션 취약점이 생기면 이 CSP는 XSS를 막지 못한다. 헤더가 있어도 실질적 방어가 없는 상태.
+          </p>
+          <p style="margin-top:0.5rem"><strong>조치:</strong> nonce 또는 hash 기반 CSP로 교체. 개발 환경 전용 완화 규칙은 <code>NODE_ENV === 'development'</code> 조건으로 분리.</p>
+        </div>
+      </div>
+
+      <div class="finding-card p2">
+        <div class="finding-header">
+          <span class="finding-id">P2-03</span>
+          <span class="finding-title">헌금대장·수입내역·지출내역 200행 하드 리밋</span>
+          <span class="finding-file">app/account-book/page.tsx:13 · income/page.tsx · expense-view/page.tsx</span>
+        </div>
+        <div class="finding-body">
+          <p>
+            API 기본 limit=200이 3개 페이지에 적용되어 있다. 꿈꾸는교회 연간 헌금 1,186건+ 기준,
+            200건 초과분이 합계에서 누락된다. 재정 보고서 숫자가 틀려진다.
+          </p>
+          <p style="margin-top:0.5rem"><strong>조치:</strong> 집계용 API 파라미터 <code>limit=10000</code> 또는 pagination 구현. 페이지 레벨 집계가 아닌 DB 집계 함수(<code>SUM</code>) 사용 권장.</p>
+        </div>
+      </div>
+
+      <div class="finding-card p2">
+        <div class="finding-header">
+          <span class="finding-id">P2-04</span>
+          <span class="finding-title">피드백 미인증 접근 테스트 로직 오류</span>
+          <span class="finding-file">e2e/security.spec.ts:54-56</span>
+        </div>
+        <div class="finding-body">
+          <p>
+            <code>app/api/feedback/route.ts</code> POST에 세션 체크가 없다.
+            미인증 요청이 실제로 201을 반환한다. 테스트는 401을 기대하므로 항상 실패한다.
+          </p>
+          <p style="margin-top:0.5rem"><strong>조치:</strong> (A) feedback POST에 <code>getServerSession</code> 인증 추가 — 피드백을 익명으로 받으려면 (B) 테스트 expected를 201로 변경하고 설계 의도 명시.</p>
+        </div>
+      </div>
+
+      <div class="finding-card p2">
+        <div class="finding-header">
+          <span class="finding-id">P2-05</span>
+          <span class="finding-title">XSS 테스트가 저장·렌더링 없이 종료</span>
+          <span class="finding-file">e2e/security.spec.ts:89-93</span>
+        </div>
+        <div class="finding-body">
+          <p>
+            테스트가 입력 필드에 XSS 페이로드를 입력하고 저장 없이 검사를 완료한다.
+            저장형(Stored) XSS가 있어도 이 테스트는 항상 통과한다.
+          </p>
+          <p style="margin-top:0.5rem"><strong>조치:</strong> dialog 이벤트 리스너 등록 → 행 저장(submit) → 목록 페이지 이동 → <code>page.on('dialog')</code>가 실행되지 않음 확인.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ─── 섹션 4: 수정 로드맵 ─── -->
+  <section class="section" id="roadmap">
+    <div class="section-heading">
+      <h2>향후 수정 로드맵</h2>
+      <span class="badge badge-info">8단계</span>
+    </div>
+
+    <div class="phase-block">
+      <div class="phase-label today">오늘 Today — P1 긴급</div>
+      <div class="roadmap-items">
+        <div class="roadmap-item danger">
+          <div class="step-num">1</div>
+          <div class="item-content">
+            <div class="item-title">[P1-01] .env.test 자격증명 제거 + 비밀번호 로테이션</div>
+            <div class="item-desc"><code>.env.test</code>에서 email/password 제거 → <code>.gitignore</code>에 추가 → git history BFG 정리 → church_admin 비밀번호 즉시 변경</div>
+          </div>
+        </div>
+        <div class="roadmap-item danger">
+          <div class="step-num">2</div>
+          <div class="item-content">
+            <div class="item-title">[P1-02] schema.sql + migrate.ts 암호화 컬럼 추가</div>
+            <div class="item-desc"><code>ALTER TABLE offerings ADD COLUMN member_name_enc TEXT, member_name_hash TEXT;</code> 등 5개 컬럼 DDL을 schema.sql과 migrate.ts에 반영</div>
+          </div>
+        </div>
+        <div class="roadmap-item danger">
+          <div class="step-num">3</div>
+          <div class="item-content">
+            <div class="item-title">[P1-03] API routes 평문 컬럼 INSERT 제거</div>
+            <div class="item-desc">offerings, feedback, members route에서 평문 컬럼(<code>member_name</code>, <code>submitter</code>, <code>name</code>) INSERT 제거. SELECT 시 <code>decrypt()</code> 반환</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phase-block">
+      <div class="phase-label week">이번 주 This Week — P1 잔여 + P2 보안</div>
+      <div class="roadmap-items">
+        <div class="roadmap-item danger">
+          <div class="step-num">4</div>
+          <div class="item-content">
+            <div class="item-title">[P1-04] upload/route.ts Excel 업로드 암호화 추가</div>
+            <div class="item-desc"><code>app/api/upload/route.ts</code>에 <code>encrypt(member_name)</code> + <code>hashForSearch(member_name)</code> 적용. offerings API와 동일 패턴</div>
+          </div>
+        </div>
+        <div class="roadmap-item danger">
+          <div class="step-num">5</div>
+          <div class="item-content">
+            <div class="item-title">[P1-05] package.json Playwright devDependency + test:e2e 스크립트</div>
+            <div class="item-desc"><code>npm install -D @playwright/test</code> → scripts에 <code>"test:e2e": "playwright test"</code> 추가</div>
+          </div>
+        </div>
+        <div class="roadmap-item warning">
+          <div class="step-num">6</div>
+          <div class="item-content">
+            <div class="item-title">[P2-02] next.config.mjs CSP nonce/hash 기반으로 교체</div>
+            <div class="item-desc"><code>unsafe-inline</code>, <code>unsafe-eval</code> 제거 → Next.js nonce 미들웨어 + <code>generateCsp()</code> 헬퍼 구현</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phase-block">
+      <div class="phase-label sprint">다음 스프린트 Next Sprint — P2 마무리</div>
+      <div class="roadmap-items">
+        <div class="roadmap-item warning">
+          <div class="step-num">7</div>
+          <div class="item-content">
+            <div class="item-title">[P2-01] e2e.yml ENCRYPTION_KEY 시크릿 주입 + P2-04 피드백 인증 정책 결정</div>
+            <div class="item-desc">GitHub Secrets에 <code>ENCRYPTION_KEY</code> 등록 → e2e.yml env block 추가. 피드백 익명 허용 여부 정책 결정 후 route 또는 테스트 수정</div>
+          </div>
+        </div>
+        <div class="roadmap-item success">
+          <div class="step-num">8</div>
+          <div class="item-content">
+            <div class="item-title">[P2-03] 3개 페이지 200행 리밋 제거 + [P2-05] XSS 테스트 저장·렌더링 추가</div>
+            <div class="item-desc">헌금대장·수입내역·지출내역 API limit 10000 또는 DB SUM. XSS 테스트에 저장→렌더링→dialog 검증 시퀀스 추가. <strong>/codex 재검토</strong> 실행</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 섹션 5: 보안 점수 변화 ─── -->
+  <section class="section" id="score">
+    <div class="section-heading">
+      <h2>보안 등급 변화 예측</h2>
+    </div>
+
+    <div class="score-row">
+      <div>
+        <div class="grade-badge grade-d">D</div>
+        <div class="grade-desc">SecuScanner 초기<br>보안헤더 전무</div>
+      </div>
+      <div class="score-arrow">→</div>
+      <div>
+        <div class="grade-badge grade-a">A</div>
+        <div class="grade-desc">보안헤더 5종 조치 완료<br>(next.config.mjs)</div>
+      </div>
+      <div class="score-arrow">→</div>
+      <div>
+        <div class="grade-badge grade-aplus">A+</div>
+        <div class="grade-desc" style="font-weight:600;color:var(--success)">Codex P1/P2 수정 완료 후<br>PII 완전 암호화 + CSP nonce</div>
+      </div>
+    </div>
+
+    <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:1.25rem 1.5rem;margin-top:1rem">
+      <h3 style="margin-bottom:0.75rem;color:var(--navy)">A+ 달성 조건</h3>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:0.4rem">
+        <li style="display:flex;align-items:center;gap:0.5rem"><span style="color:var(--danger);font-weight:700">●</span> 평문 PII 컬럼 DROP (offerings, feedback, members)</li>
+        <li style="display:flex;align-items:center;gap:0.5rem"><span style="color:var(--danger);font-weight:700">●</span> 업로드 경로 암호화 완성</li>
+        <li style="display:flex;align-items:center;gap:0.5rem"><span style="color:var(--warning);font-weight:700">●</span> CSP 'unsafe-inline'/'unsafe-eval' 제거</li>
+        <li style="display:flex;align-items:center;gap:0.5rem"><span style="color:var(--success);font-weight:700">●</span> Playwright CI 정상 작동 + ENCRYPTION_KEY 주입</li>
+        <li style="display:flex;align-items:center;gap:0.5rem"><span style="color:var(--success);font-weight:700">●</span> SecuScanner 재스캔 통과</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ─── 섹션 6: 다음 세션 체크리스트 ─── -->
+  <section class="section" id="checklist">
+    <div class="section-heading">
+      <h2>다음 세션 체크리스트</h2>
+      <span class="badge badge-info">9항목</span>
+    </div>
+
+    <ul class="checklist">
+      <li class="urgent">
+        <div class="check-box"></div>
+        <span><strong>[오늘]</strong> <code>.env.test</code> 자격증명 제거 + git history 정리 + 비밀번호 로테이션</span>
+      </li>
+      <li class="urgent">
+        <div class="check-box"></div>
+        <span><strong>[오늘]</strong> <code>schema.sql</code> + <code>scripts/migrate.ts</code> — 암호화 컬럼 5개 ALTER TABLE 추가</span>
+      </li>
+      <li class="urgent">
+        <div class="check-box"></div>
+        <span><strong>[오늘]</strong> offerings, feedback, members route에서 평문 컬럼 INSERT 제거</span>
+      </li>
+      <li class="medium">
+        <div class="check-box"></div>
+        <span><strong>[이번주]</strong> <code>app/api/upload/route.ts</code> — Excel 업로드 암호화 적용</span>
+      </li>
+      <li class="medium">
+        <div class="check-box"></div>
+        <span><strong>[이번주]</strong> <code>package.json</code> <code>@playwright/test</code> devDependency + <code>test:e2e</code> 스크립트</span>
+      </li>
+      <li class="medium">
+        <div class="check-box"></div>
+        <span><strong>[이번주]</strong> <code>next.config.mjs</code> CSP nonce/hash 기반 교체</span>
+      </li>
+      <li class="normal">
+        <div class="check-box"></div>
+        <span><strong>[다음스프린트]</strong> <code>e2e.yml</code> — ENCRYPTION_KEY GitHub Secret 주입</span>
+      </li>
+      <li class="normal">
+        <div class="check-box"></div>
+        <span><strong>[다음스프린트]</strong> 3개 페이지 200행 리밋 제거 (헌금대장·수입내역·지출내역)</span>
+      </li>
+      <li class="normal">
+        <div class="check-box"></div>
+        <span><strong>[다음스프린트]</strong> 모든 수정 완료 후 <strong>/codex 재검토</strong> 실행 → GATE: PASS 목표</span>
+      </li>
+    </ul>
+  </section>
+
+</div>
+
+<!-- ─── FOOTER ─── -->
+<div class="footer">
+  <strong>꿈꾸는교회 재정관리 포털</strong> — Codex 독립 코드 리뷰 보고서 v01 · 2026-05-30<br>
+  리뷰어: Codex CLI (OpenAI) | 생성: Claude Code + html-maker skill | 브랜치: main (24 files, +3,358 lines)
+</div>
+
+</body>
+</html>

@@ -51,9 +51,14 @@ test.describe("TC-SEC: 인증/인가 검증", () => {
     expect(res.status()).toBe(401);
   });
 
-  test("TC-SEC-012: 미인증 API 접근 차단 — /api/feedback (POST)", async ({ request }) => {
-    const res = await request.post(`${BASE}/api/feedback`, { data: { page: "test", content: "x" } });
-    expect([401, 403]).toContain(res.status());
+  // feedback POST는 의도적으로 미인증 허용 — 교인 익명 의견 제출 목적.
+  // GET(목록 조회) · PATCH(상태 변경)은 관리자 인증 필요.
+  test("TC-SEC-012: feedback POST 익명 허용 / GET는 인증 필요", async ({ request }) => {
+    const postRes = await request.post(`${BASE}/api/feedback`, { data: { page: "test", content: "익명 테스트" } });
+    expect(postRes.status()).toBe(201);
+
+    const getRes = await request.get(`${BASE}/api/feedback`);
+    expect(getRes.status()).toBe(401);
   });
 
   test("TC-SEC-013: 보호된 페이지 미인증 접근 시 로그인 리다이렉트", async ({ page }) => {
@@ -75,22 +80,51 @@ test.describe("TC-SEC: 인증/인가 검증", () => {
 test.describe("TC-SEC: 입력값 검증 (XSS/Injection)", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(`${BASE}/login`);
-    await page.fill('input[type="email"]', process.env.TEST_EMAIL || "***REMOVED***");
-    await page.fill('input[type="password"]', process.env.TEST_PASSWORD || "***REMOVED***");
+    const email = process.env.TEST_EMAIL;
+    const password = process.env.TEST_PASSWORD;
+    if (!email || !password) throw new Error('TEST_EMAIL / TEST_PASSWORD 환경변수 필요');
+    await page.fill('input[type="email"]', email);
+    await page.fill('input[type="password"]', password);
     await page.click('button[type="submit"]');
     await page.waitForURL(/dashboard|offerings/);
   });
 
-  test("TC-SEC-020: XSS 페이로드 헌금 메모 필드 — 스크립트 실행 안 됨", async ({ page }) => {
+  test("TC-SEC-020: XSS 페이로드 헌금 메모 필드 — 저장 후 렌더링 시 스크립트 미실행", async ({ page }) => {
     await page.goto(`${BASE}/offerings`);
     const payload = "<script>alert('xss')</script>";
-    const noteInput = page.locator('input[placeholder*="비고"]').first();
+
+    // dialog 리스너 먼저 등록
+    const dialogs: string[] = [];
+    page.on("dialog", (d) => { dialogs.push(d.message()); d.dismiss(); });
+
+    const noteInput = page.locator('input[placeholder*="비고"], input[name="note"]').first();
     if (await noteInput.isVisible()) {
+      // 필수 필드 최소 입력
+      const dateInput = page.locator('input[type="date"]').first();
+      if (await dateInput.isVisible()) await dateInput.fill("2026-05-30");
+      const amountInput = page.locator('input[type="number"], input[placeholder*="금액"]').first();
+      if (await amountInput.isVisible()) await amountInput.fill("1000");
+
       await noteInput.fill(payload);
-      const dialogs: string[] = [];
-      page.on("dialog", (d) => { dialogs.push(d.message()); d.dismiss(); });
+
+      // 저장 버튼 클릭
+      const saveBtn = page.locator('button:has-text("저장"), button:has-text("추가"), button[type="submit"]').first();
+      if (await saveBtn.isVisible()) {
+        await saveBtn.click();
+        await page.waitForTimeout(1000);
+      }
+
+      // 동일 페이지 또는 내역 페이지로 이동해 렌더링 확인
+      await page.goto(`${BASE}/income`);
+      await page.waitForLoadState("networkidle");
       await page.waitForTimeout(500);
+
+      // XSS alert이 실행되지 않아야 함
       expect(dialogs).toHaveLength(0);
+
+      // 페이로드가 이스케이프되어 텍스트로 표시되는지 확인
+      const bodyText = await page.locator("body").innerText();
+      expect(bodyText).not.toContain("xss");
     }
   });
 

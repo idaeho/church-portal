@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
   const hashName = member_name ? hashForSearch(member_name) : null;
 
   const result = await sql`
-    INSERT INTO offerings (week_id, entry_date, seq_no, kind, member_name, amount, note, member_name_enc, member_name_hash)
-    VALUES (${week_id}, ${entry_date}, ${seq_no}, ${kind}, ${member_name}, ${amount}, ${note}, ${encName}, ${hashName})
+    INSERT INTO offerings (week_id, entry_date, seq_no, kind, amount, note, member_name_enc, member_name_hash)
+    VALUES (${week_id}, ${entry_date}, ${seq_no}, ${kind}, ${amount}, ${note}, ${encName}, ${hashName})
     RETURNING *
   `;
   return NextResponse.json({ ...result[0], member_name }, { status: 201 });
