@@ -1,9 +1,20 @@
 # 꿈꾸는교회 재정관리 포털 E2E 테스트 계획서
 
-**작성일**: 2026-05-30  
+**버전**: v2.0 (보안 테스트 추가)  
+**작성일**: 2026-05-30 | **최종수정**: 2026-05-30  
 **테스트 환경**: http://localhost:3000 (로컬) / https://church-portal-woad.vercel.app (배포)  
 **테스트 프레임워크**: Playwright 1.40+  
 **테스트 언어**: TypeScript  
+**보안 진단 도구**: SecuScanner (자체 개발, `/Users/idaeho/HOME_AUTO/AX-tools/SecuScanner`)
+
+---
+
+## 변경 이력
+
+| 버전 | 날짜 | 변경 내용 |
+|------|------|---------|
+| v1.0 | 2026-05-30 | 초기 작성 (38 TC) |
+| v2.0 | 2026-05-30 | 보안 TC 추가 (TC-SEC-001~031, 13개), 시큐어코딩 검사 절차 추가 |
 
 ---
 
@@ -14,18 +25,24 @@
 | 계층 | 범위 | 도구 |
 |-----|------|------|
 | **E2E** | 전체 사용자 여정 (로그인 → 데이터 입력 → 조회) | Playwright |
-| **통합** | API + DB (unit test로 대체 가능) | - |
-| **단위** | 유틸리티 함수, 검증 로직 | 별도 스크립트 |
+| **보안 E2E** | 보안 헤더, 인증/인가, XSS/Injection, TLS | Playwright + SecuScanner |
+| **시큐어코딩** | 소스코드 SAST 분석 | SecuScanner SAST 모듈 |
+| **취약점 진단** | 배포 사이트 웹 스캔 | SecuScanner 웹 스캔 |
+| **통합** | API + DB | - |
 
 ### 1.2 우선순위
 
 | 우선순위 | 모듈 | 이유 | 테스트 케이스 수 |
 |---------|------|------|----------------|
 | **HIGH** | 인증 (로그인/로그아웃) | 가장 기본적이며 다른 테스트의 전제조건 | 5 |
+| **HIGH** | 보안 헤더 검증 | 재정 포털 — PII 보호 필수 | 5 |
+| **HIGH** | 인증/인가 API 보안 | 미인증 접근 차단 | 6 |
 | **HIGH** | 헌금 입력 (`/offerings`) | 핵심 기능 + DB 쓰기 | 6 |
 | **HIGH** | 지출 입력 (`/expenses`) | 핵심 기능 + 자동분류 | 6 |
+| **MEDIUM** | XSS/Injection 검증 | 사용자 입력 처리 | 2 |
 | **MEDIUM** | 페이지 네비게이션 (smoke test) | 404, 리다이렉트 확인 | 11 |
 | **MEDIUM** | 피드백 제출 (`/admin`) | 사용자 의견 수집 | 3 |
+| **LOW** | TLS/전송 보안 | Vercel 자동 관리 | 2 |
 | **LOW** | 데이터 조회 (테이블, 필터링) | 읽기 기능 | 추후 |
 
 ### 1.3 테스트 원칙
@@ -481,24 +498,91 @@ npm run test:e2e
 
 ---
 
-## 9. 추후 확장 계획
+## 9. 보안 테스트 절차 (v2 신규)
 
-### Phase 2 (v1.1)
+### 9.1 SecuScanner 배포 사이트 스캔
 
-- [ ] API 통합 테스트 (Mock 데이터)
-- [ ] 접근성 테스트 (WCAG 2.1 Level A)
-- [ ] 성능 테스트 (LCP, FID, CLS)
-- [ ] 비시각장애 사용자 테스트
+```bash
+# 실행
+cd /Users/idaeho/HOME_AUTO/AX-tools/SecuScanner
+bash run_scan.sh "https://church-portal-woad.vercel.app/"
 
-### Phase 3 (v2.0)
+# 결과 저장 위치
+reports/church-portal-woad.vercel.app_{timestamp}.html
+reports/church-portal-woad.vercel.app_{timestamp}.json
+```
 
-- [ ] E2E 테스트 AI 자동화 (정규식 기반 → ML 기반)
-- [ ] 시각 회귀 테스트 (스크린샷 비교)
-- [ ] 마이크로 프론트엔드 테스트
-- [ ] 오프라인 모드 테스트
+**주기**: 배포 후 매회, 월 1회 정기 스캔
+
+**목표 등급**: D (현재) → B 이상 (보안 헤더 조치 후)
+
+### 9.2 SAST 소스코드 시큐어코딩 검사
+
+```bash
+# SAST 서브커맨드 실행
+cd /Users/idaeho/HOME_AUTO/AX-tools/SecuScanner
+python -m secu_scanner.cli sast /Users/idaeho/MACOS_AUTO/church-portal --out reports
+
+# 의존성 취약점 검사
+python -m secu_scanner.cli deps /Users/idaeho/MACOS_AUTO/church-portal --out reports
+
+# 시크릿 누출 검사
+python -m secu_scanner.cli secrets /Users/idaeho/MACOS_AUTO/church-portal --out reports
+```
+
+**점검 항목**:
+| 분류 | 항목 |
+|------|------|
+| 인증 | 하드코딩된 비밀번호, API 키 노출 |
+| 입력값 | SQL Injection, XSS 취약 패턴 |
+| 암호화 | 약한 알고리즘 사용 (MD5, SHA1) |
+| 의존성 | CVE 취약점 있는 패키지 |
+| 설정 | 디버그 모드, 오류 메시지 노출 |
+
+### 9.3 E2E 보안 테스트 실행
+
+```bash
+# 보안 TC만 실행
+npm run test:e2e -- e2e/security.spec.ts
+
+# 배포 환경 대상
+BASE_URL=https://church-portal-woad.vercel.app npm run test:e2e -- e2e/security.spec.ts
+```
+
+### 9.4 SecuScanner 최초 스캔 결과 (2026-05-30)
+
+| ID | 등급 | 제목 | 조치 |
+|----|------|------|------|
+| H-02 | HIGH | CSP 헤더 누락 | ✅ next.config.mjs 추가 |
+| H-03 | MEDIUM | X-Frame-Options 부재 | ✅ next.config.mjs 추가 |
+| H-04 | LOW | X-Content-Type-Options 부재 | ✅ next.config.mjs 추가 |
+| H-05 | LOW | Referrer-Policy 부재 | ✅ next.config.mjs 추가 |
+| H-06 | LOW | Permissions-Policy 부재 | ✅ next.config.mjs 추가 |
+| T-03 | INFO | 인증서 만료 2026-07-27 | ⚠️ Vercel 자동갱신 모니터링 |
+| T-INFO | INFO | TLSv1.3, AES-128-GCM | ✅ 양호 |
+| PII-01 | HIGH | DB 개인정보 평문 저장 | 🔧 DESIGN_v2.md 설계 완료 |
 
 ---
 
-**버전**: 1.0  
+## 10. 추후 확장 계획
+
+### Phase 2 (v2.1)
+
+- [ ] PII 암호화 구현 후 TC-SEC-040~045 추가 (암호화 검증)
+- [ ] API 통합 테스트 (Mock 데이터)
+- [ ] 접근성 테스트 (WCAG 2.1 Level A)
+- [ ] SecuScanner 재스캔 — 등급 B 이상 확인
+
+### Phase 3 (v3.0)
+
+- [ ] CI/CD 파이프라인에 SecuScanner 자동 통합
+- [ ] 시각 회귀 테스트 (스크린샷 비교)
+- [ ] 성능 테스트 (LCP, FID, CLS)
+- [ ] 감사 로그 E2E 검증
+
+---
+
+**버전**: 2.0  
 **작성자**: Claude Code  
-**마지막 수정**: 2026-05-30
+**마지막 수정**: 2026-05-30  
+**연관 문서**: DESIGN_v2.md, e2e/security.spec.ts
