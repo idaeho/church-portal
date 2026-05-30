@@ -25,10 +25,10 @@ test.describe('Offerings (헌금 입력)', () => {
     const today = new Date().toISOString().split('T')[0]
 
     // Fill in offering form
-    await page.locator('[data-testid="offering-date"]').fill(today)
-    await page.locator('[data-testid="offering-type"]').selectOption('십일조')
-    await page.locator('[data-testid="offering-name"]').fill('홍길동')
-    await page.locator('[data-testid="offering-amount"]').fill('50000')
+    await page.locator('input[type="date"]').fill(today)
+    await page.locator('select').selectOption('십일조')
+    await page.locator('input[placeholder="이름 입력"]').fill('홍길동')
+    await page.locator('input[placeholder="0"]').fill('50000')
 
     // Click save button and wait for network response
     const saveBtn = page.locator('button:has-text("저장")')
@@ -59,7 +59,7 @@ test.describe('Offerings (헌금 입력)', () => {
 
     // Cleanup: Delete the created offering
     // This should be done via API for reliability
-    const deleteBtn = page.locator('[data-testid="delete-offering"]').first()
+    const deleteBtn = page.locator('button[aria-label="삭제"], button:has-text("삭제")').first()
     if (await deleteBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
       await deleteBtn.click()
       const confirmBtn = page.locator('button:has-text("삭제")')
@@ -70,9 +70,9 @@ test.describe('Offerings (헌금 입력)', () => {
   test('TC-OFF-002: 필수 필드 누락 시 저장 실패', async ({ page }) => {
     // Fill only some fields (omit name)
     const today = new Date().toISOString().split('T')[0]
-    await page.locator('[data-testid="offering-date"]').fill(today)
-    await page.locator('[data-testid="offering-type"]').selectOption('십일조')
-    await page.locator('[data-testid="offering-amount"]').fill('50000')
+    await page.locator('input[type="date"]').fill(today)
+    await page.locator('select').selectOption('십일조')
+    await page.locator('input[placeholder="0"]').fill('50000')
     // Skip name field
 
     // Try to save
@@ -91,18 +91,18 @@ test.describe('Offerings (헌금 입력)', () => {
     // Test if memo field auto-classifies offering type
     const today = new Date().toISOString().split('T')[0]
 
-    await page.locator('[data-testid="offering-date"]').fill(today)
-    await page.locator('[data-testid="offering-name"]').fill('임요한')
+    await page.locator('input[type="date"]').fill(today)
+    await page.locator('input[placeholder="이름 입력"]').fill('임요한')
 
     // Enter memo with building-related keyword
-    const memoField = page.locator('[data-testid="offering-memo"]')
+    const memoField = page.locator('input[placeholder="비고"]')
     await memoField.fill('건축헌금')
 
     // Trigger auto-classification (may happen on blur or change)
     await memoField.blur()
 
     // Check if type field auto-populated (implementation dependent)
-    const typeField = page.locator('[data-testid="offering-type"]')
+    const typeField = page.locator('select')
     const selectedValue = await typeField.inputValue().catch(() => '')
 
     // This test may need adjustment based on actual UI behavior
@@ -115,10 +115,10 @@ test.describe('Offerings (헌금 입력)', () => {
   test('TC-OFF-004: 헌금 항목 삭제', async ({ page }) => {
     // First create an offering
     const today = new Date().toISOString().split('T')[0]
-    await page.locator('[data-testid="offering-date"]').fill(today)
-    await page.locator('[data-testid="offering-type"]').selectOption('감사')
-    await page.locator('[data-testid="offering-name"]').fill('박영희')
-    await page.locator('[data-testid="offering-amount"]').fill('100000')
+    await page.locator('input[type="date"]').fill(today)
+    await page.locator('select').selectOption('감사')
+    await page.locator('input[placeholder="이름 입력"]').fill('박영희')
+    await page.locator('input[placeholder="0"]').fill('100000')
 
     const saveBtn = page.locator('button:has-text("저장")')
     await saveBtn.click()
@@ -128,7 +128,7 @@ test.describe('Offerings (헌금 입력)', () => {
     await expect(gridItem).toBeVisible({ timeout: 5000 })
 
     // Find and click delete button for this item
-    const deleteBtn = page.locator('[data-testid="delete-offering"]').first()
+    const deleteBtn = page.locator('button[aria-label="삭제"], button:has-text("삭제")').first()
     await expect(deleteBtn).toBeVisible()
 
     // Setup response listener for DELETE
@@ -158,17 +158,17 @@ test.describe('Offerings (헌금 입력)', () => {
     const today = new Date().toISOString().split('T')[0]
 
     // Find grid cells and fill multiple rows
-    const gridRows = page.locator('[data-testid="offering-row"]')
+    const gridRows = page.locator('tbody tr, [class*="row"]')
     const count = await gridRows.count()
 
     // Fill first 3 rows
     for (let i = 0; i < Math.min(3, count); i++) {
       const row = gridRows.nth(i)
 
-      const dateInput = row.locator('[data-testid="offering-date"]')
-      const typeSelect = row.locator('[data-testid="offering-type"]')
-      const nameInput = row.locator('[data-testid="offering-name"]')
-      const amountInput = row.locator('[data-testid="offering-amount"]')
+      const dateInput = row.locator('input[type="date"]')
+      const typeSelect = row.locator('select')
+      const nameInput = row.locator('input[placeholder="이름 입력"]')
+      const amountInput = row.locator('input[placeholder="0"]')
 
       await dateInput.fill(today)
       await typeSelect.selectOption('십일조')
@@ -188,7 +188,7 @@ test.describe('Offerings (헌금 입력)', () => {
 
     // Cleanup
     for (let i = 0; i < 3; i++) {
-      const deleteBtn = page.locator('[data-testid="delete-offering"]').first()
+      const deleteBtn = page.locator('button[aria-label="삭제"], button:has-text("삭제")').first()
       if (await deleteBtn.isVisible({ timeout: 500 }).catch(() => false)) {
         await deleteBtn.click()
         const confirmBtn = page.locator('button:has-text("삭제")')
@@ -203,19 +203,19 @@ test.describe('Offerings (헌금 입력)', () => {
     const today = new Date().toISOString().split('T')[0]
 
     // Create first offering
-    await page.locator('[data-testid="offering-date"]').fill(today)
-    await page.locator('[data-testid="offering-type"]').selectOption('주일')
-    await page.locator('[data-testid="offering-name"]').fill('김철수')
-    await page.locator('[data-testid="offering-amount"]').fill('150000')
+    await page.locator('input[type="date"]').fill(today)
+    await page.locator('select').selectOption('주일')
+    await page.locator('input[placeholder="이름 입력"]').fill('김철수')
+    await page.locator('input[placeholder="0"]').fill('150000')
 
     await page.locator('button:has-text("저장")').click()
     await expect(page.locator('text=김철수')).toBeVisible({ timeout: 5000 })
 
     // Try to create duplicate
-    await page.locator('[data-testid="offering-date"]').fill(today)
-    await page.locator('[data-testid="offering-type"]').selectOption('주일')
-    await page.locator('[data-testid="offering-name"]').fill('김철수')
-    await page.locator('[data-testid="offering-amount"]').fill('150000')
+    await page.locator('input[type="date"]').fill(today)
+    await page.locator('select').selectOption('주일')
+    await page.locator('input[placeholder="이름 입력"]').fill('김철수')
+    await page.locator('input[placeholder="0"]').fill('150000')
 
     await page.locator('button:has-text("저장")').click()
 
@@ -228,7 +228,7 @@ test.describe('Offerings (헌금 입력)', () => {
     })
 
     // Cleanup
-    const deleteBtn = page.locator('[data-testid="delete-offering"]').first()
+    const deleteBtn = page.locator('button[aria-label="삭제"], button:has-text("삭제")').first()
     if (await deleteBtn.isVisible({ timeout: 500 }).catch(() => false)) {
       await deleteBtn.click()
       const confirmBtn = page.locator('button:has-text("삭제")')

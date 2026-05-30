@@ -24,10 +24,10 @@ test.describe('Expenses (지출 입력)', () => {
     const today = new Date().toISOString().split('T')[0]
 
     // Fill expense form
-    await page.locator('[data-testid="expense-date"]').fill(today)
-    await page.locator('[data-testid="expense-account"]').selectOption('사례비')
-    await page.locator('[data-testid="expense-description"]').fill('목사님 월급')
-    await page.locator('[data-testid="expense-amount"]').fill('500000')
+    await page.locator('input[type="date"]').fill(today)
+    await page.locator('select').selectOption('사례비')
+    await page.locator('input[placeholder*="상세"]').fill('목사님 월급')
+    await page.locator('input[type="number"]').fill('500000')
 
     // Setup response listener
     const responsePromise = page.waitForResponse(res =>
@@ -53,7 +53,7 @@ test.describe('Expenses (지출 입력)', () => {
     await expect(gridItem).toBeVisible({ timeout: 5000 })
 
     // Cleanup
-    const deleteBtn = page.locator('[data-testid="delete-expense"]').first()
+    const deleteBtn = page.locator('button:has-text("✕")').first()
     if (await deleteBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
       await deleteBtn.click()
       const confirmBtn = page.locator('button:has-text("삭제")')
@@ -67,15 +67,15 @@ test.describe('Expenses (지출 입력)', () => {
     const today = new Date().toISOString().split('T')[0]
 
     // Fill date and description
-    await page.locator('[data-testid="expense-date"]').fill(today)
-    await page.locator('[data-testid="expense-description"]').fill('사무용 볼펜 구매')
+    await page.locator('input[type="date"]').fill(today)
+    await page.locator('input[placeholder*="상세"]').fill('사무용 볼펜 구매')
 
     // Trigger auto-classification (may happen on blur)
-    const descField = page.locator('[data-testid="expense-description"]')
+    const descField = page.locator('input[placeholder*="상세"]')
     await descField.blur()
 
     // Check if account field is auto-populated
-    const accountField = page.locator('[data-testid="expense-account"]')
+    const accountField = page.locator('select')
     const selectedValue = await accountField.inputValue().catch(() => '')
 
     // If auto-classification exists, verify it selected something reasonable
@@ -95,16 +95,16 @@ test.describe('Expenses (지출 입력)', () => {
     const today = new Date().toISOString().split('T')[0]
 
     // Create expense
-    await page.locator('[data-testid="expense-date"]').fill(today)
-    await page.locator('[data-testid="expense-account"]').selectOption('관리비')
-    await page.locator('[data-testid="expense-description"]').fill('전기료 납부')
-    await page.locator('[data-testid="expense-amount"]').fill('300000')
+    await page.locator('input[type="date"]').fill(today)
+    await page.locator('select').selectOption('관리비')
+    await page.locator('input[placeholder*="상세"]').fill('전기료 납부')
+    await page.locator('input[type="number"]').fill('300000')
 
     await page.locator('button:has-text("저장")').click()
     await expect(page.locator('text=전기료')).toBeVisible({ timeout: 5000 })
 
     // Delete it
-    const deleteBtn = page.locator('[data-testid="delete-expense"]').first()
+    const deleteBtn = page.locator('button:has-text("✕")').first()
     await expect(deleteBtn).toBeVisible()
 
     const responsePromise = page.waitForResponse(res =>
@@ -131,7 +131,7 @@ test.describe('Expenses (지출 입력)', () => {
   test('TC-EXP-004: 필수 필드 검증', async ({ page }) => {
     // Try to save with only date
     const today = new Date().toISOString().split('T')[0]
-    await page.locator('[data-testid="expense-date"]').fill(today)
+    await page.locator('input[type="date"]').fill(today)
 
     // Skip other required fields
     const saveBtn = page.locator('button:has-text("저장")')
@@ -151,12 +151,12 @@ test.describe('Expenses (지출 입력)', () => {
     await page.waitForLoadState('networkidle')
 
     // Find filter dropdown
-    const filterDropdown = page.locator('[data-testid="account-filter"]')
+    const filterDropdown = page.locator('select[aria-label*="필터"], select.filter, select:first-of-type')
 
     // If filter exists, test it
     if (await filterDropdown.isVisible({ timeout: 1000 }).catch(() => false)) {
       // Get current row count
-      const allRows = page.locator('[data-testid="expense-row"]')
+      const allRows = page.locator('tbody tr, [class*="row"]')
       const initialCount = await allRows.count()
 
       // Apply filter
@@ -164,14 +164,14 @@ test.describe('Expenses (지출 입력)', () => {
       await page.waitForLoadState('networkidle')
 
       // Count filtered rows
-      const filteredRows = page.locator('[data-testid="expense-row"]')
+      const filteredRows = page.locator('tbody tr, [class*="row"]')
       const filteredCount = await filteredRows.count()
 
       // Should have reduced count (or equal if all are same type)
       expect(filteredCount).toBeLessThanOrEqual(initialCount)
 
       // All visible rows should be of selected type
-      const accountCells = filteredRows.locator('[data-testid="expense-account"]')
+      const accountCells = filteredRows.locator('select')
       for (let i = 0; i < await accountCells.count(); i++) {
         const text = await accountCells.nth(i).textContent()
         expect(text).toContain('사례비')
@@ -185,7 +185,7 @@ test.describe('Expenses (지출 입력)', () => {
     await page.waitForLoadState('networkidle')
 
     // Find all amount cells
-    const amountCells = page.locator('[data-testid="expense-amount"]')
+    const amountCells = page.locator('input[type="number"]')
     const count = await amountCells.count()
 
     if (count > 0) {
@@ -198,7 +198,7 @@ test.describe('Expenses (지출 입력)', () => {
       }
 
       // Find total row
-      const totalCell = page.locator('[data-testid="expense-total"]')
+      const totalCell = page.locator('[class*="total"], tfoot td, [class*="sum"]')
       if (await totalCell.isVisible({ timeout: 1000 }).catch(() => false)) {
         const totalText = await totalCell.textContent()
         const totalAmount = parseInt(totalText?.replace(/[^0-9]/g, '') || '0', 10)

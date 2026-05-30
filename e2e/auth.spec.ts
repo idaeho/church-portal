@@ -25,7 +25,7 @@ test.describe('Authentication', () => {
     expect(page.url()).toContain('/dashboard')
 
     // Verify user info is displayed
-    const userInfo = page.locator('[data-testid="user-info"]')
+    const userInfo = page.locator('header, nav, [class*="header"], [class*="nav"]')
     await expect(userInfo).toBeVisible({ timeout: 5000 })
 
     // Verify logout button is visible

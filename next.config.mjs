@@ -1,29 +1,8 @@
 /** @type {import('next').NextConfig} */
 
-const isDev = process.env.NODE_ENV === "development";
-
-// Production CSP: unsafe-eval/unsafe-inline 제거 (XSS 방어)
-// Development CSP: Next.js HMR/dev-tools용 완화 규칙 허용
-const scriptSrc = isDev
-  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-  : "script-src 'self' 'strict-dynamic'";
-
+// CSP는 middleware.ts에서 per-request nonce로 처리
+// 여기서는 CSP 외 보안 헤더만 설정
 const securityHeaders = [
-  {
-    key: "Content-Security-Policy",
-    value: [
-      "default-src 'self'",
-      scriptSrc,
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "img-src 'self' data: https:",
-      "font-src 'self' data: https://fonts.gstatic.com",
-      "connect-src 'self' https://*.neon.tech",
-      "frame-ancestors 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-      "upgrade-insecure-requests",
-    ].join("; "),
-  },
   { key: "X-Frame-Options",           value: "DENY" },
   { key: "X-Content-Type-Options",    value: "nosniff" },
   { key: "Referrer-Policy",           value: "strict-origin-when-cross-origin" },

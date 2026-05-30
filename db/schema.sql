@@ -56,15 +56,15 @@ CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category);
 -- 교인 목록 (이름 자동완성용)
 CREATE TABLE IF NOT EXISTS members (
   id         SERIAL PRIMARY KEY,
-  name       VARCHAR(100) NOT NULL,    -- 평문 이름 (마이그레이션 후 DROP 예정)
+  name       VARCHAR(100),             -- 평문 이름 (enc-only 인서트 지원, nullable)
   name_enc   TEXT,                     -- AES-256-GCM 암호화 이름
   name_hash  VARCHAR(64),              -- HMAC-SHA256 검색 해시
   is_active  BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_members_name      ON members(name);
-CREATE INDEX IF NOT EXISTS idx_members_name_hash ON members(name_hash);
+CREATE INDEX IF NOT EXISTS idx_members_name           ON members(name);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_members_name_hash ON members(name_hash);
 
 -- 피드백
 CREATE TABLE IF NOT EXISTS feedback (

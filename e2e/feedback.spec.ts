@@ -16,13 +16,13 @@ async function login(page: any) {
 test.describe('Feedback (피드백 관리)', () => {
   test.beforeEach(async ({ page }) => {
     await login(page)
-    await page.goto('/admin')
+    await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
   })
 
   test('TC-FB-001: 피드백 제출 성공', async ({ page }) => {
     // Find feedback form
-    const feedbackForm = page.locator('[data-testid="feedback-form"]')
+    const feedbackForm = page.locator('.feedback-section')
     await expect(feedbackForm).toBeVisible({ timeout: 3000 })
 
     // Generate unique feedback to avoid conflicts
@@ -31,8 +31,8 @@ test.describe('Feedback (피드백 관리)', () => {
     const content = '대시보드 개선: 월별 비교 차트가 있으면 좋겠습니다'
 
     // Fill form
-    await page.locator('[data-testid="feedback-title"]').fill(title)
-    await page.locator('[data-testid="feedback-content"]').fill(content)
+    await page.locator('input[placeholder="이름 (선택)"]').fill(title)
+    await page.locator('textarea').fill(content)
 
     // Setup response listener
     const responsePromise = page.waitForResponse(res =>
@@ -40,7 +40,7 @@ test.describe('Feedback (피드백 관리)', () => {
     ).catch(() => null)
 
     // Submit
-    const submitBtn = page.locator('button:has-text("제출")')
+    const submitBtn = page.locator('button:has-text("의견 보내기")')
     await submitBtn.click()
 
     const response = await responsePromise
@@ -53,7 +53,7 @@ test.describe('Feedback (피드백 관리)', () => {
     await expect(successMsg).toBeVisible({ timeout: 5000 })
 
     // Verify form reset
-    const titleInput = page.locator('[data-testid="feedback-title"]')
+    const titleInput = page.locator('input[placeholder="이름 (선택)"]')
     const titleValue = await titleInput.inputValue().catch(() => '')
     if (titleValue === '') {
       expect(titleValue).toBe('')
@@ -65,14 +65,14 @@ test.describe('Feedback (피드백 관리)', () => {
 
   test('TC-FB-002: 필수 필드 검증 - 제목 없이 제출 실패', async ({ page }) => {
     // Find feedback form
-    const feedbackForm = page.locator('[data-testid="feedback-form"]')
+    const feedbackForm = page.locator('.feedback-section')
     await expect(feedbackForm).toBeVisible({ timeout: 3000 })
 
     // Fill only content (skip title)
-    await page.locator('[data-testid="feedback-content"]').fill('내용만 있고 제목은 없음')
+    await page.locator('textarea').fill('내용만 있고 제목은 없음')
 
     // Try to submit
-    const submitBtn = page.locator('button:has-text("제출")')
+    const submitBtn = page.locator('button:has-text("의견 보내기")')
     await submitBtn.click()
 
     // Verify error message for required title
@@ -82,15 +82,15 @@ test.describe('Feedback (피드백 관리)', () => {
 
   test('TC-FB-003: 필수 필드 검증 - 내용 없이 제출 실패', async ({ page }) => {
     // Find feedback form
-    const feedbackForm = page.locator('[data-testid="feedback-form"]')
+    const feedbackForm = page.locator('.feedback-section')
     await expect(feedbackForm).toBeVisible({ timeout: 3000 })
 
     // Fill only title (skip content)
     const timestamp = new Date().getTime()
-    await page.locator('[data-testid="feedback-title"]').fill(`제목만 ${timestamp}`)
+    await page.locator('input[placeholder="이름 (선택)"]').fill(`제목만 ${timestamp}`)
 
     // Try to submit
-    const submitBtn = page.locator('button:has-text("제출")')
+    const submitBtn = page.locator('button:has-text("의견 보내기")')
     await submitBtn.click()
 
     // Verify error message for required content
@@ -104,22 +104,22 @@ test.describe('Feedback (피드백 관리)', () => {
     await page.waitForLoadState('networkidle')
 
     // Find feedback table/list
-    const feedbackTable = page.locator('[data-testid="feedback-table"], [data-testid="feedback-list"]')
+    const feedbackTable = page.locator('table, [class*="list"]')
 
     if (await feedbackTable.isVisible({ timeout: 2000 }).catch(() => false)) {
       // Verify table has header
-      const headerRow = page.locator('[data-testid="feedback-header"]')
+      const headerRow = page.locator('thead tr, [class*="header"]')
       await expect(headerRow).toBeVisible({ timeout: 2000 })
 
       // Verify at least one feedback item (if any exists)
-      const feedbackRows = page.locator('[data-testid="feedback-row"]')
+      const feedbackRows = page.locator('tbody tr')
       const count = await feedbackRows.count()
 
       if (count > 0) {
         // Verify columns: title, content, date, etc.
         const firstRow = feedbackRows.nth(0)
-        const titleCell = firstRow.locator('[data-testid="feedback-title-cell"]')
-        const contentCell = firstRow.locator('[data-testid="feedback-content-cell"]')
+        const titleCell = firstRow.locator('td:first-child')
+        const contentCell = firstRow.locator('td:nth-child(2)')
 
         // At least title should be visible
         await expect(titleCell).toBeVisible({ timeout: 2000 }).catch(async () => {
@@ -135,17 +135,17 @@ test.describe('Feedback (피드백 관리)', () => {
     const timestamp = new Date().getTime()
     const testTitle = `삭제테스트 ${timestamp}`
 
-    await page.locator('[data-testid="feedback-title"]').fill(testTitle)
-    await page.locator('[data-testid="feedback-content"]').fill('이 피드백은 테스트용으로 삭제될 것입니다')
+    await page.locator('input[placeholder="이름 (선택)"]').fill(testTitle)
+    await page.locator('textarea').fill('이 피드백은 테스트용으로 삭제될 것입니다')
 
-    await page.locator('button:has-text("제출")').click()
+    await page.locator('button:has-text("의견 보내기")').click()
 
     // Wait for feedback to appear
     const feedbackItem = page.locator(`text=${testTitle}`)
     await expect(feedbackItem).toBeVisible({ timeout: 5000 })
 
     // Find delete button for this feedback
-    const deleteBtn = page.locator('[data-testid="delete-feedback"]').first()
+    const deleteBtn = page.locator('button:has-text("삭제"), button:has-text("✕")').first()
 
     if (await deleteBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
       // Setup response listener for DELETE
@@ -177,7 +177,7 @@ test.describe('Feedback (피드백 관리)', () => {
     await page.waitForLoadState('networkidle')
 
     // Find feedback list
-    const feedbackRows = page.locator('[data-testid="feedback-row"]')
+    const feedbackRows = page.locator('tbody tr')
     const count = await feedbackRows.count()
 
     if (count > 0) {
@@ -186,15 +186,15 @@ test.describe('Feedback (피드백 관리)', () => {
       await firstRow.click()
 
       // Verify detail view opens or modal appears
-      const detailView = page.locator('[data-testid="feedback-detail"], [data-testid="feedback-modal"]')
+      const detailView = page.locator('[class*="detail"], [class*="modal"], dialog')
       await expect(detailView).toBeVisible({ timeout: 3000 }).catch(async () => {
         // Fallback: verify page navigates to detail
         expect(page.url()).toMatch(/feedback|detail/)
       })
 
       // Verify content is visible
-      const titleInDetail = page.locator('[data-testid="feedback-title-detail"]')
-      const contentInDetail = page.locator('[data-testid="feedback-content-detail"]')
+      const titleInDetail = page.locator('h3, [class*="title"]')
+      const contentInDetail = page.locator('p, [class*="content"]')
 
       await expect(titleInDetail.or(contentInDetail)).toBeVisible({ timeout: 2000 })
     }
@@ -206,11 +206,11 @@ test.describe('Feedback (피드백 관리)', () => {
     await page.waitForLoadState('networkidle')
 
     // Check if filter exists
-    const filterDropdown = page.locator('[data-testid="feedback-filter"]')
+    const filterDropdown = page.locator('select')
 
     if (await filterDropdown.isVisible({ timeout: 1000 }).catch(() => false)) {
       // Get initial count
-      const allRows = page.locator('[data-testid="feedback-row"]')
+      const allRows = page.locator('tbody tr')
       const initialCount = await allRows.count()
 
       // Apply filter (e.g., by status)
@@ -218,7 +218,7 @@ test.describe('Feedback (피드백 관리)', () => {
       await page.waitForLoadState('networkidle')
 
       // Count filtered rows
-      const filteredRows = page.locator('[data-testid="feedback-row"]')
+      const filteredRows = page.locator('tbody tr')
       const filteredCount = await filteredRows.count()
 
       // Filtered count should be <= initial count
@@ -232,7 +232,7 @@ test.describe('Feedback (피드백 관리)', () => {
     await page.waitForLoadState('networkidle')
 
     // Check if search input exists
-    const searchInput = page.locator('[data-testid="feedback-search"]')
+    const searchInput = page.locator('input[type="search"], input[placeholder*="검색"]')
 
     if (await searchInput.isVisible({ timeout: 1000 }).catch(() => false)) {
       // Type search term
@@ -240,7 +240,7 @@ test.describe('Feedback (피드백 관리)', () => {
       await page.waitForLoadState('networkidle')
 
       // Verify results are filtered
-      const results = page.locator('[data-testid="feedback-row"]')
+      const results = page.locator('tbody tr')
       const count = await results.count()
 
       // Should have results or empty message

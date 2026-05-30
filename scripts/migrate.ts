@@ -36,7 +36,6 @@ async function main() {
     )`,
     `CREATE INDEX IF NOT EXISTS idx_offerings_week ON offerings(week_id)`,
     `CREATE INDEX IF NOT EXISTS idx_offerings_date ON offerings(entry_date)`,
-    `CREATE INDEX IF NOT EXISTS idx_offerings_name_hash ON offerings(member_name_hash)`,
     `CREATE TABLE IF NOT EXISTS expenses (
       id            SERIAL PRIMARY KEY,
       week_id       VARCHAR(10),
@@ -59,7 +58,6 @@ async function main() {
       is_active  BOOLEAN DEFAULT TRUE,
       created_at TIMESTAMPTZ DEFAULT NOW()
     )`,
-    `CREATE INDEX IF NOT EXISTS idx_members_name_hash ON members(name_hash)`,
     `CREATE TABLE IF NOT EXISTS feedback (
       id            SERIAL PRIMARY KEY,
       page          VARCHAR(100) NOT NULL,
@@ -77,8 +75,11 @@ async function main() {
     `ALTER TABLE members   ADD COLUMN IF NOT EXISTS name_enc         TEXT`,
     `ALTER TABLE members   ADD COLUMN IF NOT EXISTS name_hash        VARCHAR(64)`,
     `ALTER TABLE feedback  ADD COLUMN IF NOT EXISTS submitter_enc    TEXT`,
+    // members.name nullable 전환 (enc-only 인서트 지원)
+    `ALTER TABLE members   ALTER COLUMN name DROP NOT NULL`,
+    // 인덱스는 컬럼 존재 후에 생성 (기존 DB 업그레이드 안전)
     `CREATE INDEX IF NOT EXISTS idx_offerings_name_hash ON offerings(member_name_hash)`,
-    `CREATE INDEX IF NOT EXISTS idx_members_name_hash   ON members(name_hash)`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_members_name_hash ON members(name_hash)`,
     `CREATE TABLE IF NOT EXISTS weekly_reports (
       id              SERIAL PRIMARY KEY,
       week_id         VARCHAR(10) NOT NULL UNIQUE,

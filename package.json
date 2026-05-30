@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "db:migrate": "npx tsx scripts/migrate.ts",
-    "feedback:check": "npx tsx scripts/check-feedback.ts"
+    "feedback:check": "npx tsx scripts/check-feedback.ts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "next": "^14.2.29",
@@ -32,6 +33,8 @@
     "postcss": "^8.4.49",
     "tsx": "^4.19.2",
     "eslint": "^8.57.1",
-    "eslint-config-next": "^14.2.29"
+    "eslint-config-next": "^14.2.29",
+    "@playwright/test": "^1.44.0",
+    "dotenv": "^16.4.5"
   }
 }

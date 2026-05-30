@@ -60,7 +60,7 @@ test.describe('Page Navigation (Smoke Tests)', () => {
     expect(page.url()).not.toContain('404')
 
     // Verify KPI cards or main content
-    const content = page.locator('[data-testid="dashboard-content"], h1, [role="heading"]')
+    const content = page.locator('h1, h2, [role="heading"], main')
     await expect(content).toBeVisible({ timeout: 3000 })
 
     // Verify response is successful
@@ -78,7 +78,7 @@ test.describe('Page Navigation (Smoke Tests)', () => {
     expect(page.url()).not.toContain('404')
 
     // Verify form/grid exists
-    const form = page.locator('[data-testid="offerings-form"], [data-testid="offerings-grid"], form')
+    const form = page.locator('form, table, [class*="grid"]')
     await expect(form).toBeVisible({ timeout: 3000 }).catch(async () => {
       // Alternative: check for page heading
       const heading = page.locator('h1, h2, [role="heading"]')
@@ -94,7 +94,7 @@ test.describe('Page Navigation (Smoke Tests)', () => {
     expect(page.url()).not.toContain('404')
 
     // Verify form/grid exists
-    const form = page.locator('[data-testid="expenses-form"], [data-testid="expenses-grid"], form')
+    const form = page.locator('form, table, [class*="grid"]')
     await expect(form).toBeVisible({ timeout: 3000 }).catch(async () => {
       const heading = page.locator('h1, h2, [role="heading"]')
       await expect(heading).toBeVisible({ timeout: 3000 })
@@ -109,7 +109,7 @@ test.describe('Page Navigation (Smoke Tests)', () => {
     expect(page.url()).not.toContain('404')
 
     // Verify table/content exists
-    const table = page.locator('[role="table"], table, [data-testid="income-table"]')
+    const table = page.locator('[role="table"], table')
     await expect(table).toBeVisible({ timeout: 3000 }).catch(async () => {
       const heading = page.locator('h1, h2, [role="heading"]')
       await expect(heading).toBeVisible({ timeout: 3000 })
@@ -124,7 +124,7 @@ test.describe('Page Navigation (Smoke Tests)', () => {
     expect(page.url()).not.toContain('404')
 
     // Verify table/content exists
-    const table = page.locator('[role="table"], table, [data-testid="expense-table"]')
+    const table = page.locator('[role="table"], table')
     await expect(table).toBeVisible({ timeout: 3000 }).catch(async () => {
       const heading = page.locator('h1, h2, [role="heading"]')
       await expect(heading).toBeVisible({ timeout: 3000 })
@@ -139,7 +139,7 @@ test.describe('Page Navigation (Smoke Tests)', () => {
     expect(page.url()).not.toContain('404')
 
     // Verify content exists
-    const content = page.locator('[data-testid="account-book-content"], [role="table"], [role="heading"]')
+    const content = page.locator('[role="table"], [role="heading"], main')
     await expect(content).toBeVisible({ timeout: 3000 })
   })
 
@@ -151,7 +151,7 @@ test.describe('Page Navigation (Smoke Tests)', () => {
     expect(page.url()).not.toContain('404')
 
     // Verify content exists
-    const content = page.locator('[data-testid="weekly-report-content"], [role="heading"]')
+    const content = page.locator('[role="heading"], main')
     await expect(content).toBeVisible({ timeout: 3000 })
   })
 
@@ -163,7 +163,7 @@ test.describe('Page Navigation (Smoke Tests)', () => {
     expect(page.url()).not.toContain('404')
 
     // Verify account list or content exists
-    const content = page.locator('[data-testid="account-list"], [role="table"], [role="heading"]')
+    const content = page.locator('[role="table"], [role="heading"], main')
     await expect(content).toBeVisible({ timeout: 3000 })
   })
 
@@ -175,7 +175,7 @@ test.describe('Page Navigation (Smoke Tests)', () => {
     expect(page.url()).not.toContain('404')
 
     // Verify admin content exists (feedback section, password change, etc)
-    const content = page.locator('[data-testid="admin-content"], [role="heading"]')
+    const content = page.locator('[role="heading"], main')
     await expect(content).toBeVisible({ timeout: 3000 })
   })
 

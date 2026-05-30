@@ -17,6 +17,7 @@ import { execSync } from "child_process";
 import { writeFileSync, unlinkSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
+import { decrypt } from "../lib/crypto";
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const TO_EMAIL     = process.env.GOG_TO || process.env.NOTIFY_EMAIL;
@@ -36,7 +37,7 @@ async function main() {
   console.log(`[${new Date().toISOString()}] 피드백 체크 시작`);
 
   const items = await sql`
-    SELECT id, page, content, submitter, created_at
+    SELECT id, page, content, submitter_enc, created_at
     FROM feedback
     WHERE status = 'pending'
     ORDER BY created_at DESC
@@ -58,7 +59,7 @@ async function main() {
     "",
     ...items.map((f, i) => [
       `[${i + 1}] 📍 페이지: ${f.page}`,
-      `    👤 작성자: ${f.submitter || "익명"}`,
+      `    👤 작성자: ${f.submitter_enc ? decrypt(f.submitter_enc as string) : "익명"}`,
       `    📝 내용:\n       ${f.content}`,
       `    🕐 날짜: ${new Date(f.created_at).toLocaleString("ko-KR")}`,
       "",
