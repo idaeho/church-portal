@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   const rows = await sql`SELECT password FROM users WHERE email = ${session.user?.email} LIMIT 1`;
   if (!rows.length) return NextResponse.json({ error: "사용자 없음" }, { status: 404 });
 
-  const ok = await bcrypt.compare(current, rows[0].password);
+  const ok = await bcrypt.compare(current, rows[0].password as string);
   if (!ok) return NextResponse.json({ error: "현재 비밀번호 불일치" }, { status: 403 });
 
   const hash = await bcrypt.hash(newPassword, 12);

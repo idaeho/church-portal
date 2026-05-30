@@ -24,10 +24,15 @@ export const authOptions: NextAuthOptions = {
         if (rows.length === 0) return null;
         const user = rows[0];
 
-        const ok = await bcrypt.compare(credentials.password, user.password);
+        const ok = await bcrypt.compare(credentials.password, user.password as string);
         if (!ok) return null;
 
-        return { id: String(user.id), email: user.email, name: user.name, role: user.role };
+        return {
+          id: String(user.id),
+          email: user.email as string,
+          name: user.name as string,
+          role: user.role as string,
+        };
       },
     }),
   ],

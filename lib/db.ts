@@ -1,10 +1,25 @@
-import { neon } from "@neondatabase/serverless";
+import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL 환경변수 없음");
+type SqlFn = NeonQueryFunction<false, false>;
+let _sql: SqlFn | null = null;
+
+export function getSql(): SqlFn {
+  if (!_sql) {
+    if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL 환경변수 없음");
+    _sql = neon(process.env.DATABASE_URL) as SqlFn;
+  }
+  return _sql;
 }
 
-export const sql = neon(process.env.DATABASE_URL);
+// 태그드 템플릿 리터럴 헬퍼 — await sql`...` 문법 지원
+export async function sql(
+  strings: TemplateStringsArray,
+  ...values: unknown[]
+): Promise<Record<string, unknown>[]> {
+  const fn = getSql();
+  return fn(strings, ...values) as Promise<Record<string, unknown>[]>;
+}
+
 
 export type Offering = {
   id: number;

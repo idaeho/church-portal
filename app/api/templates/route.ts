@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
 
   if (type === "offering") {
     const buf = generateOfferingTemplate();
-    return new NextResponse(buf, {
+    return new NextResponse(new Uint8Array(buf), {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition": 'attachment; filename="헌금입력_템플릿.xlsx"',
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 
   if (type === "expense") {
     const buf = generateExpenseTemplate();
-    return new NextResponse(buf, {
+    return new NextResponse(new Uint8Array(buf), {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition": 'attachment; filename="지출입력_템플릿.xlsx"',
