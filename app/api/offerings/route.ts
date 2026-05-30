@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sql } from "@/lib/db";
+import { encrypt, decrypt, hashForSearch } from "@/lib/crypto";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -15,7 +16,11 @@ export async function GET(req: NextRequest) {
     ? await sql`SELECT * FROM offerings WHERE week_id = ${weekId} ORDER BY entry_date, seq_no`
     : await sql`SELECT * FROM offerings ORDER BY entry_date DESC, seq_no DESC LIMIT ${limit}`;
 
-  return NextResponse.json(rows);
+  const decrypted = rows.map((r) => ({
+    ...r,
+    member_name: r.member_name_enc ? decrypt(r.member_name_enc as string) : (r.member_name ?? ""),
+  }));
+  return NextResponse.json(decrypted);
 }
 
 export async function POST(req: NextRequest) {
@@ -33,12 +38,15 @@ export async function POST(req: NextRequest) {
   `;
   const seq_no = seqResult[0].next_seq;
 
+  const encName  = member_name ? encrypt(member_name) : null;
+  const hashName = member_name ? hashForSearch(member_name) : null;
+
   const result = await sql`
-    INSERT INTO offerings (week_id, entry_date, seq_no, kind, member_name, amount, note)
-    VALUES (${week_id}, ${entry_date}, ${seq_no}, ${kind}, ${member_name}, ${amount}, ${note})
+    INSERT INTO offerings (week_id, entry_date, seq_no, kind, member_name, amount, note, member_name_enc, member_name_hash)
+    VALUES (${week_id}, ${entry_date}, ${seq_no}, ${kind}, ${member_name}, ${amount}, ${note}, ${encName}, ${hashName})
     RETURNING *
   `;
-  return NextResponse.json(result[0], { status: 201 });
+  return NextResponse.json({ ...result[0], member_name }, { status: 201 });
 }
 
 export async function DELETE(req: NextRequest) {

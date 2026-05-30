@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sql } from "@/lib/db";
+import { encrypt, decrypt } from "@/lib/crypto";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -11,10 +12,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "page, content 필수" }, { status: 400 });
   }
 
+  const submitterVal = submitter || "익명";
+  const submitterEnc = encrypt(submitterVal);
+
   const result = await sql`
-    INSERT INTO feedback (page, content, submitter)
-    VALUES (${page}, ${content.trim()}, ${submitter || "익명"})
-    RETURNING *
+    INSERT INTO feedback (page, content, submitter, submitter_enc)
+    VALUES (${page}, ${content.trim()}, ${submitterVal}, ${submitterEnc})
+    RETURNING id, page, content, submitter, status, created_at
   `;
   return NextResponse.json(result[0], { status: 201 });
 }
@@ -27,11 +31,16 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get("status") || "pending";
 
   const rows = await sql`
-    SELECT * FROM feedback
+    SELECT id, page, content, submitter, submitter_enc, status, reviewed_at, created_at
+    FROM feedback
     WHERE status = ${status}
     ORDER BY created_at DESC
   `;
-  return NextResponse.json(rows);
+  const decrypted = rows.map((r) => ({
+    ...r,
+    submitter: r.submitter_enc ? decrypt(r.submitter_enc as string) : (r.submitter ?? "익명"),
+  }));
+  return NextResponse.json(decrypted);
 }
 
 export async function PATCH(req: NextRequest) {

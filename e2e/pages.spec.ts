@@ -64,8 +64,8 @@ test.describe('Page Navigation (Smoke Tests)', () => {
 
     // Verify response is successful
     const responses = await page.evaluate(() => {
-      // Check if page loaded with HTTP 200 (via navigation)
-      return performance.getEntriesByType('navigation')[0]?.responseStatus
+      const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+      return nav?.responseStatus;
     })
   })
 
