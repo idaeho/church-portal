@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   const buffer = Buffer.from(await file.arrayBuffer());
 
   if (type === "offering") {
-    const rows = parseOfferingExcel(buffer);
+    const rows = await parseOfferingExcel(buffer);
     let inserted = 0;
 
     for (const row of rows) {
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (type === "expense") {
-    const rows = parseExpenseExcel(buffer);
+    const rows = await parseExpenseExcel(buffer);
     let inserted = 0;
 
     for (const row of rows) {

@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { detectExpenseCat, detectOfferingKind, parseKoreanAmount } from "./auto-classify";
 
 export type OfferingRow = {
@@ -19,10 +19,13 @@ export type ExpenseRow = {
 };
 
 // 헌금 업로드 엑셀 파싱
-export function parseOfferingExcel(buffer: Buffer): OfferingRow[] {
-  const wb = XLSX.read(buffer, { type: "buffer", cellDates: true });
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "" });
+export async function parseOfferingExcel(buffer: Buffer): Promise<OfferingRow[]> {
+  const wb = new ExcelJS.Workbook();
+  // exceljs Buffer 타입 정의가 @types/node Buffer<ArrayBufferLike>와 불일치 — 런타임 정상
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await wb.xlsx.load(buffer as any);
+  const ws = wb.worksheets[0];
+  const rows = sheetToJson(ws);
 
   return rows
     .filter((r) => r["금액"] || r["amount"])
@@ -40,10 +43,13 @@ export function parseOfferingExcel(buffer: Buffer): OfferingRow[] {
 }
 
 // 지출 업로드 엑셀 파싱
-export function parseExpenseExcel(buffer: Buffer): ExpenseRow[] {
-  const wb = XLSX.read(buffer, { type: "buffer", cellDates: true });
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "" });
+export async function parseExpenseExcel(buffer: Buffer): Promise<ExpenseRow[]> {
+  const wb = new ExcelJS.Workbook();
+  // exceljs Buffer 타입 정의가 @types/node Buffer<ArrayBufferLike>와 불일치 — 런타임 정상
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await wb.xlsx.load(buffer as any);
+  const ws = wb.worksheets[0];
+  const rows = sheetToJson(ws);
 
   return rows
     .filter((r) => r["금액"] || r["amount"])
@@ -62,66 +68,95 @@ export function parseExpenseExcel(buffer: Buffer): ExpenseRow[] {
 }
 
 // 헌금 템플릿 엑셀 생성
-export function generateOfferingTemplate(): Buffer {
-  const wb = XLSX.utils.book_new();
-  const headers = [["날짜", "종류", "이름", "금액", "비고"]];
-  const example = [
-    ["2026-05-17", "십일조헌금", "홍길동", 500000, ""],
-    ["2026-05-17", "감사헌금", "김철수", 100000, "계좌입금 0517"],
-    ["2026-05-17", "건축헌금", "이영희", 200000, ""],
-  ];
-  const ws = XLSX.utils.aoa_to_sheet([...headers, ...example]);
+export async function generateOfferingTemplate(): Promise<Buffer> {
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet("헌금입력");
 
-  // 열 너비 설정
-  ws["!cols"] = [{ wch: 12 }, { wch: 15 }, { wch: 10 }, { wch: 10 }, { wch: 20 }];
+  ws.addRow(["날짜", "종류", "이름", "금액", "비고"]);
+  ws.addRow(["2026-05-17", "십일조헌금", "홍길동", 500000, ""]);
+  ws.addRow(["2026-05-17", "감사헌금", "김철수", 100000, "계좌입금 0517"]);
+  ws.addRow(["2026-05-17", "건축헌금", "이영희", 200000, ""]);
 
-  XLSX.utils.book_append_sheet(wb, ws, "헌금입력");
+  ws.getColumn(1).width = 12;
+  ws.getColumn(2).width = 15;
+  ws.getColumn(3).width = 10;
+  ws.getColumn(4).width = 10;
+  ws.getColumn(5).width = 20;
 
-  // 종류 드롭다운 시트
-  const kindWs = XLSX.utils.aoa_to_sheet([
+  const kindWs = wb.addWorksheet("종류목록(참고)");
+  [
     ["종류 목록"],
     ["십일조헌금"], ["감사헌금"], ["주일헌금"], ["건축헌금"],
     ["선교헌금"], ["구역예배헌금"], ["특별헌금"], ["절기헌금"], ["봉헌"], ["기타헌금"],
-  ]);
-  XLSX.utils.book_append_sheet(wb, kindWs, "종류목록(참고)");
+  ].forEach((row) => kindWs.addRow(row));
 
-  return Buffer.from(XLSX.write(wb, { type: "buffer", bookType: "xlsx" }));
+  return Buffer.from(await wb.xlsx.writeBuffer());
 }
 
 // 지출 템플릿 엑셀 생성
-export function generateExpenseTemplate(): Buffer {
-  const wb = XLSX.utils.book_new();
-  const headers = [["날짜", "계정과목", "상세내역", "금액", "비고"]];
-  const example = [
-    ["2026-05-17", "사례비", "목사님 사례비 5월", 3400000, ""],
-    ["2026-05-15", "보험료", "한화손보 05-220", 250490, ""],
-    ["2026-05-11", "교회관리비", "코웨이렌탈", 26500, ""],
-  ];
-  const ws = XLSX.utils.aoa_to_sheet([...headers, ...example]);
-  ws["!cols"] = [{ wch: 12 }, { wch: 15 }, { wch: 25 }, { wch: 12 }, { wch: 20 }];
-  XLSX.utils.book_append_sheet(wb, ws, "지출입력");
+export async function generateExpenseTemplate(): Promise<Buffer> {
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet("지출입력");
 
-  const catWs = XLSX.utils.aoa_to_sheet([
+  ws.addRow(["날짜", "계정과목", "상세내역", "금액", "비고"]);
+  ws.addRow(["2026-05-17", "사례비", "목사님 사례비 5월", 3400000, ""]);
+  ws.addRow(["2026-05-15", "보험료", "한화손보 05-220", 250490, ""]);
+  ws.addRow(["2026-05-11", "교회관리비", "코웨이렌탈", 26500, ""]);
+
+  ws.getColumn(1).width = 12;
+  ws.getColumn(2).width = 15;
+  ws.getColumn(3).width = 25;
+  ws.getColumn(4).width = 12;
+  ws.getColumn(5).width = 20;
+
+  const catWs = wb.addWorksheet("계정과목(참고)");
+  [
     ["계정과목 목록"],
     ["사례비"], ["교회관리비"], ["보험료"], ["현대카드"],
     ["대출이자"], ["선교비"], ["목회활동비"], ["행정비"],
     ["식비"], ["교육비"], ["구제비"], ["건축비"], ["차량비"], ["통신비"], ["기타"],
-  ]);
-  XLSX.utils.book_append_sheet(wb, catWs, "계정과목(참고)");
+  ].forEach((row) => catWs.addRow(row));
 
-  return Buffer.from(XLSX.write(wb, { type: "buffer", bookType: "xlsx" }));
+  return Buffer.from(await wb.xlsx.writeBuffer());
+}
+
+// sheet_to_json 대체: row1을 헤더로, 이후 행을 객체로 변환
+function sheetToJson(ws: ExcelJS.Worksheet): Record<string, unknown>[] {
+  const headers: string[] = [];
+  const result: Record<string, unknown>[] = [];
+
+  ws.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+    if (rowNumber === 1) {
+      row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        headers[colNumber] = String(cell.value ?? "");
+      });
+      return;
+    }
+    const obj: Record<string, unknown> = {};
+    row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+      const header = headers[colNumber];
+      if (!header) return;
+      // 수식 셀은 result 값 추출
+      const cv = cell.value as unknown as { result?: unknown } | null;
+      const val = (cv && typeof cv === "object" && "result" in cv) ? cv.result ?? "" : (cell.value ?? "");
+      obj[header] = val;
+    });
+    result.push(obj);
+  });
+
+  return result;
 }
 
 function formatDate(raw: unknown): string {
   if (!raw) return new Date().toISOString().slice(0, 10);
   if (raw instanceof Date) return raw.toISOString().slice(0, 10);
   const s = String(raw).trim();
-  // YYYY-MM-DD or YYYY/MM/DD
   if (/^\d{4}[-/]\d{2}[-/]\d{2}$/.test(s)) return s.replace(/\//g, "-");
-  // Excel serial number
+  // Excel 시리얼 번호 (숫자 문자열)
   if (/^\d+$/.test(s)) {
-    const d = XLSX.SSF.parse_date_code(parseInt(s));
-    if (d) return `${d.y}-${String(d.m).padStart(2, "0")}-${String(d.d).padStart(2, "0")}`;
+    const serial = parseInt(s, 10);
+    const date = new Date(Math.round((serial - 25569) * 86400 * 1000));
+    return date.toISOString().slice(0, 10);
   }
   return new Date().toISOString().slice(0, 10);
 }

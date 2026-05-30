@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
   const type = searchParams.get("type");
 
   if (type === "offering") {
-    const buf = generateOfferingTemplate();
+    const buf = await generateOfferingTemplate();
     return new NextResponse(new Uint8Array(buf), {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (type === "expense") {
-    const buf = generateExpenseTemplate();
+    const buf = await generateExpenseTemplate();
     return new NextResponse(new Uint8Array(buf), {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
